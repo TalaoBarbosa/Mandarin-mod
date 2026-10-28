@@ -123,7 +123,7 @@ public final class Speech {
         Set<String> seen = new HashSet<>();
         List<String> missing = new ArrayList<>();
         for (Vocab.Word w : Vocab.all()) for (Vocab.Alt f : w.forms()) {
-            String p = phrase(f.zh());
+            String p = f.rec() != null && !f.rec().isEmpty() ? f.rec() : phrase(f.zh());
             if (modelWords != null) for (String tok : p.split(" ")) if (!modelWords.contains(tok)) missing.add(tok);
             if (seen.add(p)) a.add(p);
         }

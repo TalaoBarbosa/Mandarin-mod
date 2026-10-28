@@ -21,7 +21,8 @@ import java.util.*;
 public final class Vocab {
     private Vocab() {}
 
-    public record Alt(String zh, String py) {}
+    /** rec = como a palavra entra na gramática do reconhecedor (palavras que o modelo conhece, separadas por espaço) */
+    public record Alt(String zh, String py, String rec) {}
 
     public static final class Word {
         public final String key, zh, py, pt;
@@ -30,7 +31,8 @@ public final class Vocab {
         final List<TagKey<Item>> tags = new ArrayList<>();
         Word(String key, String zh, String py, String pt, List<Alt> alts) { this.key = key; this.zh = zh; this.py = py; this.pt = pt; this.alts = alts; }
         /** todas as formas aceitas (a principal e os apelidos) */
-        public List<Alt> forms() { List<Alt> f = new ArrayList<>(); f.add(new Alt(zh, py)); f.addAll(alts); return f; }
+        public String rec = null;
+        public List<Alt> forms() { List<Alt> f = new ArrayList<>(); f.add(new Alt(zh, py, rec == null ? zh : rec)); f.addAll(alts); return f; }
         public String pretty() { return Pinyin.pretty(py); }
     }
 
@@ -46,8 +48,12 @@ public final class Vocab {
             for (JsonElement el : root.getAsJsonArray("words")) {
                 JsonObject o = el.getAsJsonObject();
                 List<Alt> alts = new ArrayList<>();
-                for (JsonElement a : o.getAsJsonArray("alts")) alts.add(new Alt(a.getAsJsonObject().get("zh").getAsString(), a.getAsJsonObject().get("py").getAsString()));
+                for (JsonElement a : o.getAsJsonArray("alts")) {
+                    JsonObject ao = a.getAsJsonObject();
+                    alts.add(new Alt(ao.get("zh").getAsString(), ao.get("py").getAsString(), ao.has("rec") ? ao.get("rec").getAsString() : ao.get("zh").getAsString()));
+                }
                 Word w = new Word(o.get("key").getAsString(), o.get("zh").getAsString(), o.get("py").getAsString(), o.get("pt").getAsString(), alts);
+                if (o.has("rec")) w.rec = o.get("rec").getAsString();
                 JsonArray items = o.getAsJsonArray("items");
                 for (JsonElement it : items) {
                     String s = it.getAsString();

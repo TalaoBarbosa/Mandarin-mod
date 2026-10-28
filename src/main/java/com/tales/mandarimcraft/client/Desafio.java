@@ -211,7 +211,7 @@ public final class Desafio {
 
     private static List<Answer.Form> forms(Vocab.Word w) {
         List<Answer.Form> f = new ArrayList<>();
-        for (Vocab.Alt a : w.forms()) f.add(new Answer.Form(a.zh(), a.py()));
+        for (Vocab.Alt a : w.forms()) f.add(new Answer.Form(a.zh(), a.py(), a.rec()));
         return f;
     }
 
@@ -225,7 +225,7 @@ public final class Desafio {
             Vocab.Word tw = target;
             if (prac) {  // treino: a palavra "pedida" é a que ele disse
                 tw = null;
-                for (Vocab.Word w : Vocab.all()) for (Vocab.Alt a : w.forms()) if (a.zh().equals(heard)) tw = w;
+                for (Vocab.Word w : Vocab.all()) for (Vocab.Alt a : w.forms()) if (a.zh().equals(heard) || a.rec().replace(" ", "").equals(heard)) tw = w;
                 if (tw == null) return new Result(true, false, false, heard, null, null, null);
             }
             Answer.Match m = Answer.match(heard, forms(tw), all);
@@ -235,7 +235,7 @@ public final class Desafio {
             if (h != null && !h.pieces().isEmpty()) {
                 from = h.pieces().get(0).start(); to = h.pieces().get(h.pieces().size() - 1).end();
                 int ns = Pinyin.parse(f.py()).size();
-                if (heard.equals(f.zh()) && h.pieces().size() == ns && ns > 1) {
+                if (heard.equals(f.recJoined()) && h.pieces().size() == ns && ns > 1) {
                     syl = new double[ns][2];
                     for (int i = 0; i < ns; i++) { syl[i][0] = h.pieces().get(i).start(); syl[i][1] = h.pieces().get(i).end(); }
                 }

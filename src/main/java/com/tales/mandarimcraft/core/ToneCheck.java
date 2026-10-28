@@ -115,7 +115,10 @@ public final class ToneCheck {
     static double mean(double[] a, int s, int e) { double t = 0; for (int i = s; i < e; i++) t += a[i]; return t / Math.max(1, e - s); }
 
     /** a sílaba é compatível com o tom e? final = última sílaba da palavra; tol > 1 deixa mais leniente */
-    public static String fits(int e, Feats F, boolean fin, double tol) {
+    public static String fits(int e, Feats F, boolean fin, double tol) { return fits(e, F, fin, false, tol); }
+
+    /** nextNeutral: a próxima sílaba é neutra (石头, 绳子): aí o 2º tom continua subindo nela e pode começar baixo */
+    public static String fits(int e, Feats F, boolean fin, boolean nextNeutral, double tol) {
         if (e == 0 || e == 5 || F == null) return null;
         double m = tol * (fin ? 1.0 : 1.35);
         double lv = F.level, rise = F.rise, fall = F.fall, dip = F.dip, imn = F.imn, imx = F.imx, mn = F.mn, rng = F.rng, head = F.head, tail = F.tail;
@@ -129,7 +132,7 @@ public final class ToneCheck {
             }
             case 2 -> {
                 if (mn < -5.5 * tol && imn > 0.25 && imn < 0.8 && dip > 1.5 * m) return "afundou (como 3º tom)";
-                if (tail < -1.5 * tol && lv < -2.5 * tol) return "ficou baixo (como 3º tom)";
+                if (!nextNeutral && tail < -1.5 * tol && lv < -2.5 * tol) return "ficou baixo (como 3º tom)";
                 if (rise >= 1.5 / m && imx > 0.5) return null;
                 if (fall > 2.5 * m && imx < 0.4) return "caiu (como 4º tom)";
                 return fin ? "não subiu" : null;
@@ -220,7 +223,7 @@ public final class ToneCheck {
             double[] seg = new double[cnt]; cnt = 0;
             for (int i = s2; i < e2; i++) if (f[i] > 0) seg[cnt++] = f[i];
             Feats F = feats(seg, ref, syls.get(k).base());
-            String why = fits(exp[k], F, fin, tol);
+            String why = fits(exp[k], F, fin, k + 1 < n && syls.get(k + 1).tone() == 5, tol);
             res.add(new SylResult(syls.get(k), exp[k], why == null, why == null ? "" : why));
             if (why != null) all = false;
         }
