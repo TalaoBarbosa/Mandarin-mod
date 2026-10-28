@@ -135,9 +135,9 @@ public class MandarimCraft implements ModInitializer {
         Vocab.Word w = Vocab.get(a.word);
         if (w == null) return;
         WorldData.PlayerData pd = data.get(p.getUuid());
-        if ("__mic__".equals(ans.heard())) {   // microfone não abriu: não é culpa do jogador, pausa sem tirar nada
+        if ("__mic__".equals(ans.heard())) {   // microfone ou reconhecimento de voz falhou: não é culpa do jogador, pausa sem tirar nada
             pd.paused = true; data.save();
-            p.sendMessage(Text.literal("[Mandarim Craft] O microfone não funcionou, então pausei (sem perder nada). Resolva e use /mandarim continuar.").formatted(Formatting.YELLOW), false);
+            p.sendMessage(Text.literal("[Mandarim Craft] O microfone ou o reconhecimento de voz não funcionou, então pausei (sem perder nada). Resolva e use /mandarim continuar.").formatted(Formatting.YELLOW), false);
             return;
         }
         if (ans.ok()) {
@@ -198,7 +198,7 @@ public class MandarimCraft implements ModInitializer {
     private static int cmdHelp(CommandContext<ServerCommandSource> c) {
         c.getSource().sendFeedback(() -> Text.literal(
                 "Mandarim Craft: /mandarim comecar · pausar · continuar · palavras (o que já aprendeu) · faltam (o que falta) · esquecer <palavra|tudo>\n" +
-                "No seu jogo: /hanyu calibrar · teste · tons rigido|normal|leve · tempo <segundos> · dica nenhuma|hanzi|pinyin"), false);
+                "No seu jogo: /hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <segundos> · dica nenhuma|hanzi|pinyin · chances <0-2>"), false);
         return 1;
     }
 

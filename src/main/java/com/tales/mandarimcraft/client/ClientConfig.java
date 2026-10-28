@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 /** Ajustes do jogador (config/mandarimcraft.json): tempo, rigor dos tons, dica e a referência da voz. */
 public final class ClientConfig {
@@ -35,10 +36,20 @@ public final class ClientConfig {
             Path f = file();
             if (Files.exists(f)) try (Reader r = Files.newBufferedReader(f, StandardCharsets.UTF_8)) {
                 ClientConfig c = GSON.fromJson(r, ClientConfig.class);
-                if (c != null) return c;
+                if (c != null) return c.sane();
             }
         } catch (Exception e) { MandarimCraft.LOG.warn("Config inválida, usando o padrão", e); }
         return new ClientConfig();
+    }
+
+    /** o arquivo pode ter sido editado à mão: volta para o padrão o que estiver fora do que os comandos aceitam */
+    private ClientConfig sane() {
+        if (seconds < 3 || seconds > 20) seconds = 7;
+        if (retries < 0 || retries > 2) retries = 1;
+        if (tones == null || !List.of("rigido", "normal", "leve").contains(tones)) tones = "rigido";
+        if (hint == null || !List.of("nenhuma", "hanzi", "pinyin").contains(hint)) hint = "nenhuma";
+        if (!(refHz >= 60 && refHz <= 450)) { refHz = 0; samples = 0; }
+        return this;
     }
 
     public void save() {

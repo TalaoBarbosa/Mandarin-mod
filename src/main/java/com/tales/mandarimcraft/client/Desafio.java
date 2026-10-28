@@ -71,19 +71,21 @@ public final class Desafio {
         if (pending != null && pending.word().equals(c.word())) pending = null;
     }
 
-    /** /hanyu teste: diga o nome de qualquer item, sem perder nada */
-    public static void startPractice() {
-        if (state != St.IDLE && state != St.SHOW) return;
+    /** /hanyu teste: diga o nome de qualquer item, sem perder nada. false = está no meio de outro desafio */
+    public static boolean startPractice() {
+        if (state != St.IDLE && state != St.SHOW) return false;
         cur = null; word = null; icon = ItemStack.EMPTY; practice = true; attempt = 1;
         begin();
+        return true;
     }
 
-    /** /hanyu calibrar */
-    public static void startCalibration() {
-        if (state != St.IDLE && state != St.SHOW) return;
-        cur = null; word = null; practice = false; calibrateThenChallenge = false;
-        if (!Speech.ready()) { state = St.WAIT_MODEL; return; }
+    /** /hanyu calibrar. false = está no meio de outro desafio */
+    public static boolean startCalibration() {
+        if (state != St.IDLE && state != St.SHOW) return false;
+        cur = null; word = null; icon = ItemStack.EMPTY; practice = false; calibrateThenChallenge = false;
+        if (!Speech.ready()) { state = St.WAIT_MODEL; return true; }
         calibrate();
+        return true;
     }
 
     public static void reset() {
@@ -158,14 +160,11 @@ public final class Desafio {
                 if (MIC.speechEnded || timeUp) finishListening();
             }
             case RETRY_WAIT -> { if (now >= retryAt) { if (retryCalibrate) { retryCalibrate = false; calibrate(); } else listen(); } }
-            case SHOW -> {
-                if (now >= showUntil) {
-                    state = St.IDLE;
-                    if (pending != null) { Payloads.Challenge p = pending; pending = null; onChallenge(p); }
-                }
-            }
+            case SHOW -> { if (now >= showUntil) state = St.IDLE; }
             default -> {}
         }
+        // desafio que chegou com a tela ocupada; vale para qualquer caminho que volte a IDLE (não só o fim do SHOW)
+        if (state == St.IDLE && pending != null) { Payloads.Challenge p = pending; pending = null; onChallenge(p); }
     }
 
     private static void finishListening() {
@@ -247,6 +246,18 @@ public final class Desafio {
         return f;
     }
 
+    /** pedaços seguidos (palavras do reconhecedor) que juntos dão exatamente este texto: [início, fim) ou null */
+    static int[] span(List<Speech.Piece> ps, String text) {
+        for (int i = 0; i < ps.size(); i++) {
+            StringBuilder b = new StringBuilder();
+            for (int j = i; j < ps.size() && b.length() < text.length(); j++) {
+                b.append(ps.get(j).text());
+                if (b.toString().equals(text)) return new int[]{i, j + 1};
+            }
+        }
+        return null;
+    }
+
     private static Result analyze(float[] audio, boolean spoke, Vocab.Word target, boolean prac, double ref, double tol) {
         try {
             // reconhece mesmo se o detector de fala não disparou (voz baixa): com só silêncio o Vosk devolve vazio
@@ -256,9 +267,12 @@ public final class Desafio {
             List<Answer.Form> all = new ArrayList<>();
             for (Vocab.Word w : Vocab.all()) all.addAll(forms(w));
             Vocab.Word tw = target;
-            if (prac) {  // treino: a palavra "pedida" é a que ele disse
-                tw = null;
-                for (Vocab.Word w : Vocab.all()) for (Vocab.Alt a : w.forms()) if (a.zh().equals(heard) || a.rec().replace(" ", "").equals(heard)) tw = w;
+            if (prac) {  // treino: a palavra "pedida" é a que ele disse (a forma mais longa que aparece no que ouviu)
+                tw = null; int best = 0;
+                for (Vocab.Word w : Vocab.all()) for (Vocab.Alt a : w.forms()) {
+                    String r = a.rec().replace(" ", "");
+                    if (r.length() > best && heard.contains(r)) { tw = w; best = r.length(); }
+                }
                 if (tw == null) return new Result(true, false, false, heard, null, null, null);
             }
             Answer.Match m = Answer.match(heard, forms(tw), all);
@@ -266,11 +280,16 @@ public final class Desafio {
             Answer.Form f = m.form();
             double from = -1, to = -1; double[][] syl = null;
             if (h != null && !h.pieces().isEmpty()) {
-                from = h.pieces().get(0).start(); to = h.pieces().get(h.pieces().size() - 1).end();
+                // só o trecho da palavra pedida (ouviu "木头石头": o tom é conferido em 木头, não nas quatro sílabas)
+                int[] sp = span(h.pieces(), f.recJoined());
+                if (sp == null) sp = span(h.pieces(), f.zh());
+                if (sp == null) sp = new int[]{0, h.pieces().size()};
+                List<Speech.Piece> ps = h.pieces().subList(sp[0], sp[1]);
+                from = ps.get(0).start(); to = ps.get(ps.size() - 1).end();
                 int ns = Pinyin.parse(f.py()).size();
-                if (heard.equals(f.recJoined()) && h.pieces().size() == ns && ns > 1) {
+                if (ps.size() == ns && ns > 1) {
                     syl = new double[ns][2];
-                    for (int i = 0; i < ns; i++) { syl[i][0] = h.pieces().get(i).start(); syl[i][1] = h.pieces().get(i).end(); }
+                    for (int i = 0; i < ns; i++) { syl[i][0] = ps.get(i).start(); syl[i][1] = ps.get(i).end(); }
                 }
             }
             ToneCheck.Result tr = ToneCheck.check(audio, from, to, syl, f.zh(), f.py(), ref, tol);

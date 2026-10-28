@@ -39,8 +39,15 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 | `/hanyu tempo <3-20>` | segundos para falar (padrão 7) |
 | `/hanyu dica nenhuma\|hanzi\|pinyin` | mostrar dica no desafio |
 | `/hanyu calibrar` | refaz a medida da sua voz |
+| `/hanyu chances <0-2>` | quantas tentativas extras quando erra (padrão 1) |
+
+## Problemas comuns
+- **O mod não me ouve:** o Minecraft usa o microfone **padrão do Windows** (Configurações → Sistema → Som → Entrada), não o que você escolheu no Discord. Confira também Privacidade → Microfone → "Permitir que aplicativos da área de trabalho acessem o microfone". Depois feche e abra o jogo.
+- **A barrinha verde quase não mexe:** aumente o volume de entrada do microfone nas mesmas configurações de som.
+- **Acerta as sílabas e erra o tom toda hora:** refaça `/hanyu calibrar` e, se precisar, use `/hanyu tons normal` ou `leve`.
+- **Outro problema:** o `logs/latest.log` tem uma linha `[tentativa]` para cada fala, com o que o mod ouviu.
 
 ## Montar
-O GitHub Actions monta sozinho a cada envio (baixa o modelo de voz e publica em Releases). Localmente: `gradle build` com Java 21, depois de pôr o `vosk-model-small-cn-0.22.zip` em `src/main/resources/mandarimcraft/model.zip`.
+O GitHub Actions monta sozinho a cada envio (baixa o modelo de voz e publica em Releases). Localmente, com Java 21: ponha o `vosk-model-small-cn-0.22.zip` em `src/main/resources/mandarimcraft/model.zip` e rode `./gradlew build` (no Windows, `gradlew.bat build`). Use o wrapper: com outra versão do Gradle o `.jar` pode sair vazio.
 
 Licença MIT. Gravações: Shtooka/audio-cmn (CC BY-SA). Modelo de voz: Vosk (Apache 2.0).

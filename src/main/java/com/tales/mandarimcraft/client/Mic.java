@@ -61,7 +61,7 @@ public final class Mic {
                 line = null;
             }
         }
-        error = "Não achei o microfone. Confira se ele está ligado e liberado para o Java/Minecraft.";
+        error = "Não achei o microfone. Veja se está ligado e liberado no sistema.";
         return false;
     }
 

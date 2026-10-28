@@ -20,6 +20,14 @@ public final class WorldData {
         public Map<String, Integer> fails = new HashMap<>();         // palavra -> quantas vezes errou
         public Set<String> grace = new HashSet<>();                  // itens que já tinha ao começar: errar não tira
         public int itemsLost = 0;
+
+        /** campo apagado ou "null" no arquivo (editado à mão) não pode derrubar o servidor depois */
+        PlayerData fix() {
+            if (learned == null) learned = new LinkedHashMap<>();
+            if (fails == null) fails = new HashMap<>();
+            if (grace == null) grace = new HashSet<>();
+            return this;
+        }
     }
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -34,11 +42,18 @@ public final class WorldData {
             if (Files.exists(file)) {
                 try (Reader r = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
                     Map<String, PlayerData> m = GSON.fromJson(r, new TypeToken<Map<String, PlayerData>>() {}.getType());
-                    if (m != null) d.players = m;
+                    if (m != null) {
+                        m.values().removeIf(Objects::isNull);
+                        m.values().forEach(PlayerData::fix);
+                        d.players = m;
+                    }
                 }
             }
         } catch (Exception e) {
-            MandarimCraft.LOG.error("Erro lendo {}", file, e);
+            // guarda uma cópia antes de começar do zero: o próximo save() sobrescreveria o progresso de todo mundo
+            Path bak = file.resolveSibling(file.getFileName() + ".com-erro");
+            MandarimCraft.LOG.error("Erro lendo {} (cópia guardada em {})", file, bak, e);
+            try { Files.copy(file, bak, java.nio.file.StandardCopyOption.REPLACE_EXISTING); } catch (Exception ignored) {}
         }
         return d;
     }

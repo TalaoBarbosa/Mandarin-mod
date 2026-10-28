@@ -68,7 +68,7 @@ public final class Speech {
             status = "pronto";
             MandarimCraft.LOG.info("Vosk pronto: {} palavras no modelo", modelWords == null ? "?" : modelWords.size());
         } catch (Throwable t) {
-            status = "erro: " + t.getMessage();
+            status = "erro: " + (t.getMessage() != null ? t.getMessage() : t.toString());
             MandarimCraft.LOG.error("Vosk não carregou", t);
         }
     }

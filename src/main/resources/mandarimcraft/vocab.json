@@ -1605,7 +1605,7 @@
   {
    "key": "lingdang",
    "zh": "铃铛",
-   "py": "ling2dang1",
+   "py": "ling2dang5",
    "pt": "sino",
    "items": [
     "minecraft:bell"
@@ -1649,7 +1649,7 @@
   {
    "key": "zhalan",
    "zh": "栅栏",
-   "py": "zha4lan2",
+   "py": "zha4lan5",
    "pt": "cerca",
    "items": [
     "#minecraft:fences",

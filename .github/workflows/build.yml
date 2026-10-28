@@ -18,9 +18,8 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # usa o Gradle do wrapper (8.10.2): com Gradle mais novo o Loom 1.8 monta um .jar vazio sem dar erro
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
 
       - name: Versões mais novas do Fabric para 1.21.1
         run: |
@@ -38,7 +37,7 @@ jobs:
           ls -la src/main/resources/mandarimcraft/
 
       - name: Montar
-        run: gradle build --no-daemon --stacktrace
+        run: ./gradlew build --no-daemon --stacktrace
 
       - name: Guardar o .jar
         uses: actions/upload-artifact@v4

@@ -9,6 +9,15 @@ import net.minecraft.text.Text;
 public final class Hud {
     private Hud() {}
 
+    /** por cima de uma tela aberta (inventário, baú…): à frente dos itens dos slots, como uma dica de item */
+    public static void renderOnTop(DrawContext ctx) {
+        if (Desafio.state == Desafio.St.IDLE) return;
+        ctx.getMatrices().push();
+        ctx.getMatrices().translate(0, 0, 400);
+        render(ctx);
+        ctx.getMatrices().pop();
+    }
+
     public static void render(DrawContext ctx) {
         Desafio.St st = Desafio.state;
         if (st == Desafio.St.IDLE) return;
@@ -16,9 +25,12 @@ public final class Hud {
         if (mc.options.hudHidden) return;
         TextRenderer tr = mc.textRenderer;
         int sw = ctx.getScaledWindowWidth();
-        int w = Math.min(sw - 16, 280), x = (sw - w) / 2, y = 6;
         boolean listening = st == Desafio.St.LISTEN || st == Desafio.St.CALIBRATE;
         boolean big = !Desafio.line2.isEmpty() && (st == Desafio.St.CALIBRATE || Desafio.line2.matches(".*[\\u4e00-\\u9fff].*"));
+        // largura que cabe o texto mais comprido (mensagens de erro do microfone passavam da borda do quadro)
+        int textW = Math.max(tr.getWidth(Desafio.title), Math.max(tr.getWidth(Desafio.line1), tr.getWidth(Desafio.line3)));
+        textW = Math.max(textW, big ? (int) Math.ceil(tr.getWidth(Desafio.line2) * 1.6f) : tr.getWidth(Desafio.line2));
+        int w = Math.min(sw - 16, Math.max(280, textW + (Desafio.icon.isEmpty() ? 16 : 36))), x = (sw - w) / 2, y = 6;
         int h = 34 + (Desafio.line1.isEmpty() ? 0 : 12) + (Desafio.line2.isEmpty() ? 0 : (big ? 20 : 12)) + (Desafio.line3.isEmpty() ? 0 : 12) + (listening ? 12 : 0);
         int border = st == Desafio.St.SHOW ? (Desafio.good ? 0xFF3FAF5F : 0xFFD24A4A) : 0xFF6B7FA6;
         ctx.fill(x - 1, y - 1, x + w + 1, y + h + 1, border);
