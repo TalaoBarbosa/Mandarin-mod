@@ -4,6 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.sun.jna.Function;
+import com.sun.jna.Library;
+import com.sun.jna.NativeLibrary;
+import com.sun.jna.Platform;
 import com.tales.mandarimcraft.MandarimCraft;
 import com.tales.mandarimcraft.Vocab;
 import net.fabricmc.loader.api.FabricLoader;
@@ -57,6 +61,7 @@ public final class Speech {
             }
             Path root = findModelRoot(dir);
             LibVosk.setLogLevel(LogLevel.WARNINGS);
+            bindUtf8();
             model = new Model(root.toString());
             modelWords = readWords(root);
             grammar = buildGrammar();
@@ -66,6 +71,21 @@ public final class Speech {
             status = "erro: " + t.getMessage();
             MandarimCraft.LOG.error("Vosk não carregou", t);
         }
+    }
+
+    /**
+     * O JNA converte texto pela codificação do sistema (no Windows em português, Cp1252), que não tem chinês:
+     * a gramática chegava ao Vosk como "??" e nada era reconhecido. Estas duas chamadas vão em UTF-8; o resto
+     * (inclusive o caminho do modelo, que pode ter acento no nome do usuário) continua como o Vosk faz.
+     */
+    private static Function setGrm, finalResult;
+
+    private static void bindUtf8() {
+        // a mesma biblioteca que o LibVosk acabou de registrar (mesmo nome e opções = mesma instância, sem carregar de novo)
+        NativeLibrary lib = NativeLibrary.getInstance(Platform.isWindows() ? "libvosk" : "vosk",
+                Collections.singletonMap(Library.OPTION_CLASSLOADER, LibVosk.class.getClassLoader()));
+        setGrm = lib.getFunction("vosk_recognizer_set_grm", Function.C_CONVENTION, "UTF-8");
+        finalResult = lib.getFunction("vosk_recognizer_final_result", Function.C_CONVENTION, "UTF-8");
     }
 
     /**
@@ -164,10 +184,11 @@ public final class Speech {
             int s = Math.max(-32768, Math.min(32767, Math.round(pcm[i] * 32767f)));
             b[2 * i] = (byte) (s & 0xff); b[2 * i + 1] = (byte) ((s >> 8) & 0xff);
         }
-        try (Recognizer rec = new Recognizer(model, 16000f, grammar)) {
+        try (Recognizer rec = new Recognizer(model, 16000f)) {
+            setGrm.invokeVoid(new Object[]{rec.getPointer(), grammar});   // não new Recognizer(model, rate, grammar) nem getFinalResult(): veja bindUtf8
             rec.setWords(true);
             rec.acceptWaveForm(b, b.length);
-            JsonObject o = JsonParser.parseString(rec.getFinalResult()).getAsJsonObject();
+            JsonObject o = JsonParser.parseString(finalResult.invokeString(new Object[]{rec.getPointer()}, false)).getAsJsonObject();
             List<Piece> ps = new ArrayList<>();
             if (o.has("result")) for (JsonElement el : o.getAsJsonArray("result")) {
                 JsonObject r = el.getAsJsonObject();
