@@ -1,0 +1,1656 @@
+{
+ "words": [
+  {
+   "key": "mutou",
+   "zh": "木头",
+   "py": "mu4tou5",
+   "pt": "madeira (tronco)",
+   "items": [
+    "#minecraft:logs"
+   ],
+   "alts": [],
+   "audio": [
+    "w:木头"
+   ]
+  },
+  {
+   "key": "muban",
+   "zh": "木板",
+   "py": "mu4ban3",
+   "pt": "tábuas",
+   "items": [
+    "#minecraft:planks"
+   ],
+   "alts": [],
+   "audio": [
+    "w:木",
+    "w:板"
+   ]
+  },
+  {
+   "key": "gunzi",
+   "zh": "棍子",
+   "py": "gun4zi5",
+   "pt": "graveto",
+   "items": [
+    "minecraft:stick"
+   ],
+   "alts": [
+    {
+     "zh": "木棍",
+     "py": "mu4gun4"
+    }
+   ],
+   "audio": [
+    "w:棍子"
+   ]
+  },
+  {
+   "key": "gongzuotai",
+   "zh": "工作台",
+   "py": "gong1zuo4tai2",
+   "pt": "bancada de trabalho",
+   "items": [
+    "minecraft:crafting_table"
+   ],
+   "alts": [],
+   "audio": [
+    "w:工作",
+    "w:台"
+   ]
+  },
+  {
+   "key": "xiangzi",
+   "zh": "箱子",
+   "py": "xiang1zi5",
+   "pt": "baú",
+   "items": [
+    "minecraft:chest",
+    "minecraft:trapped_chest",
+    "minecraft:barrel"
+   ],
+   "alts": [],
+   "audio": [
+    "w:箱子"
+   ]
+  },
+  {
+   "key": "men",
+   "zh": "门",
+   "py": "men2",
+   "pt": "porta",
+   "items": [
+    "#minecraft:doors"
+   ],
+   "alts": [],
+   "audio": [
+    "w:门"
+   ]
+  },
+  {
+   "key": "chuang",
+   "zh": "床",
+   "py": "chuang2",
+   "pt": "cama",
+   "items": [
+    "#minecraft:beds"
+   ],
+   "alts": [],
+   "audio": [
+    "w:床"
+   ]
+  },
+  {
+   "key": "chuan",
+   "zh": "船",
+   "py": "chuan2",
+   "pt": "barco",
+   "items": [
+    "#minecraft:boats",
+    "#minecraft:chest_boats"
+   ],
+   "alts": [],
+   "audio": [
+    "w:船"
+   ]
+  },
+  {
+   "key": "huoba",
+   "zh": "火把",
+   "py": "huo3ba3",
+   "pt": "tocha",
+   "items": [
+    "minecraft:torch",
+    "minecraft:soul_torch"
+   ],
+   "alts": [],
+   "audio": [
+    "s:huo2",
+    "s:ba3"
+   ]
+  },
+  {
+   "key": "tizi",
+   "zh": "梯子",
+   "py": "ti1zi5",
+   "pt": "escada de mão",
+   "items": [
+    "minecraft:ladder"
+   ],
+   "alts": [],
+   "audio": [
+    "s:ti1",
+    "w:子"
+   ]
+  },
+  {
+   "key": "shumiao",
+   "zh": "树苗",
+   "py": "shu4miao2",
+   "pt": "muda de árvore",
+   "items": [
+    "#minecraft:saplings"
+   ],
+   "alts": [],
+   "audio": [
+    "w:树",
+    "w:苗"
+   ]
+  },
+  {
+   "key": "shuye",
+   "zh": "树叶",
+   "py": "shu4ye4",
+   "pt": "folhas",
+   "items": [
+    "#minecraft:leaves"
+   ],
+   "alts": [],
+   "audio": [
+    "s:shu4",
+    "s:ye4"
+   ]
+  },
+  {
+   "key": "hua",
+   "zh": "花",
+   "py": "hua1",
+   "pt": "flor",
+   "items": [
+    "#minecraft:small_flowers",
+    "#minecraft:flowers"
+   ],
+   "alts": [],
+   "audio": [
+    "w:花"
+   ]
+  },
+  {
+   "key": "cao",
+   "zh": "草",
+   "py": "cao3",
+   "pt": "grama, mato",
+   "items": [
+    "minecraft:grass_block",
+    "minecraft:short_grass",
+    "minecraft:tall_grass",
+    "minecraft:fern",
+    "minecraft:large_fern"
+   ],
+   "alts": [],
+   "audio": [
+    "w:草"
+   ]
+  },
+  {
+   "key": "tu",
+   "zh": "土",
+   "py": "tu3",
+   "pt": "terra",
+   "items": [
+    "#minecraft:dirt"
+   ],
+   "alts": [
+    {
+     "zh": "泥土",
+     "py": "ni2tu3"
+    }
+   ],
+   "audio": [
+    "w:土"
+   ]
+  },
+  {
+   "key": "shazi",
+   "zh": "沙子",
+   "py": "sha1zi5",
+   "pt": "areia",
+   "items": [
+    "#minecraft:sand"
+   ],
+   "alts": [],
+   "audio": [
+    "w:沙子"
+   ]
+  },
+  {
+   "key": "shitou",
+   "zh": "石头",
+   "py": "shi2tou5",
+   "pt": "pedra",
+   "items": [
+    "minecraft:stone",
+    "minecraft:smooth_stone",
+    "#minecraft:stone_crafting_materials",
+    "#minecraft:stone_tool_materials"
+   ],
+   "alts": [],
+   "audio": [
+    "w:石头"
+   ]
+  },
+  {
+   "key": "ganzhe",
+   "zh": "甘蔗",
+   "py": "gan1zhe5",
+   "pt": "cana-de-açúcar",
+   "items": [
+    "minecraft:sugar_cane"
+   ],
+   "alts": [],
+   "audio": [
+    "w:甘蔗"
+   ]
+  },
+  {
+   "key": "xianrenzhang",
+   "zh": "仙人掌",
+   "py": "xian1ren2zhang3",
+   "pt": "cacto",
+   "items": [
+    "minecraft:cactus"
+   ],
+   "alts": [],
+   "audio": [
+    "s:xian1",
+    "s:ren2",
+    "s:zhang3"
+   ]
+  },
+  {
+   "key": "zhuzi",
+   "zh": "竹子",
+   "py": "zhu2zi5",
+   "pt": "bambu",
+   "items": [
+    "minecraft:bamboo"
+   ],
+   "alts": [],
+   "audio": [
+    "w:竹子"
+   ]
+  },
+  {
+   "key": "heiyaoshi",
+   "zh": "黑曜石",
+   "py": "hei1yao4shi2",
+   "pt": "obsidiana",
+   "items": [
+    "minecraft:obsidian",
+    "minecraft:crying_obsidian"
+   ],
+   "alts": [],
+   "audio": [
+    "s:hei1",
+    "s:yao4",
+    "s:shi2"
+   ]
+  },
+  {
+   "key": "bing",
+   "zh": "冰",
+   "py": "bing1",
+   "pt": "gelo",
+   "items": [
+    "minecraft:ice",
+    "minecraft:packed_ice",
+    "minecraft:blue_ice"
+   ],
+   "alts": [],
+   "audio": [
+    "w:冰"
+   ]
+  },
+  {
+   "key": "xue",
+   "zh": "雪",
+   "py": "xue3",
+   "pt": "neve",
+   "items": [
+    "minecraft:snow",
+    "minecraft:snow_block",
+    "minecraft:powder_snow_bucket"
+   ],
+   "alts": [],
+   "audio": [
+    "w:雪"
+   ]
+  },
+  {
+   "key": "xueqiu",
+   "zh": "雪球",
+   "py": "xue3qiu2",
+   "pt": "bola de neve",
+   "items": [
+    "minecraft:snowball"
+   ],
+   "alts": [],
+   "audio": [
+    "w:雪",
+    "w:球"
+   ]
+  },
+  {
+   "key": "yangmao",
+   "zh": "羊毛",
+   "py": "yang2mao2",
+   "pt": "lã",
+   "items": [
+    "#minecraft:wool"
+   ],
+   "alts": [],
+   "audio": [
+    "w:羊",
+    "w:毛"
+   ]
+  },
+  {
+   "key": "mei",
+   "zh": "煤",
+   "py": "mei2",
+   "pt": "carvão",
+   "items": [
+    "#minecraft:coals"
+   ],
+   "alts": [],
+   "audio": [
+    "w:煤"
+   ]
+  },
+  {
+   "key": "meikuang",
+   "zh": "煤矿",
+   "py": "mei2kuang4",
+   "pt": "minério de carvão",
+   "items": [
+    "#minecraft:coal_ores"
+   ],
+   "alts": [],
+   "audio": [
+    "w:煤",
+    "w:矿"
+   ]
+  },
+  {
+   "key": "tiekuang",
+   "zh": "铁矿",
+   "py": "tie3kuang4",
+   "pt": "minério de ferro",
+   "items": [
+    "#minecraft:iron_ores",
+    "minecraft:raw_iron"
+   ],
+   "alts": [],
+   "audio": [
+    "w:铁",
+    "w:矿"
+   ]
+  },
+  {
+   "key": "tie",
+   "zh": "铁",
+   "py": "tie3",
+   "pt": "ferro",
+   "items": [
+    "minecraft:iron_ingot",
+    "minecraft:iron_nugget"
+   ],
+   "alts": [
+    {
+     "zh": "铁锭",
+     "py": "tie3ding4"
+    }
+   ],
+   "audio": [
+    "w:铁"
+   ]
+  },
+  {
+   "key": "tiekuai",
+   "zh": "铁块",
+   "py": "tie3kuai4",
+   "pt": "bloco de ferro",
+   "items": [
+    "minecraft:iron_block"
+   ],
+   "alts": [],
+   "audio": [
+    "w:铁",
+    "w:块"
+   ]
+  },
+  {
+   "key": "jinzi",
+   "zh": "金子",
+   "py": "jin1zi5",
+   "pt": "ouro",
+   "items": [
+    "minecraft:gold_ingot",
+    "minecraft:raw_gold",
+    "minecraft:gold_nugget",
+    "#minecraft:gold_ores"
+   ],
+   "alts": [],
+   "audio": [
+    "w:金",
+    "w:子"
+   ]
+  },
+  {
+   "key": "zuanshi",
+   "zh": "钻石",
+   "py": "zuan4shi2",
+   "pt": "diamante",
+   "items": [
+    "minecraft:diamond",
+    "#minecraft:diamond_ores"
+   ],
+   "alts": [],
+   "audio": [
+    "w:钻石"
+   ]
+  },
+  {
+   "key": "lvbaoshi",
+   "zh": "绿宝石",
+   "py": "lv4bao3shi2",
+   "pt": "esmeralda",
+   "items": [
+    "minecraft:emerald",
+    "#minecraft:emerald_ores"
+   ],
+   "alts": [],
+   "audio": [
+    "w:绿",
+    "w:宝石"
+   ]
+  },
+  {
+   "key": "hongshi",
+   "zh": "红石",
+   "py": "hong2shi2",
+   "pt": "redstone",
+   "items": [
+    "minecraft:redstone",
+    "#minecraft:redstone_ores"
+   ],
+   "alts": [],
+   "audio": [
+    "s:hong2",
+    "s:shi2"
+   ]
+  },
+  {
+   "key": "tong",
+   "zh": "铜",
+   "py": "tong2",
+   "pt": "cobre",
+   "items": [
+    "minecraft:copper_ingot",
+    "minecraft:raw_copper",
+    "#minecraft:copper_ores"
+   ],
+   "alts": [],
+   "audio": [
+    "w:铜"
+   ]
+  },
+  {
+   "key": "luzi",
+   "zh": "炉子",
+   "py": "lu2zi5",
+   "pt": "fornalha",
+   "items": [
+    "minecraft:furnace",
+    "minecraft:blast_furnace",
+    "minecraft:smoker"
+   ],
+   "alts": [
+    {
+     "zh": "熔炉",
+     "py": "rong2lu2"
+    }
+   ],
+   "audio": [
+    "w:炉子"
+   ]
+  },
+  {
+   "key": "boli",
+   "zh": "玻璃",
+   "py": "bo1li5",
+   "pt": "vidro",
+   "items": [
+    "minecraft:glass",
+    "minecraft:glass_pane",
+    "minecraft:tinted_glass"
+   ],
+   "alts": [],
+   "audio": [
+    "w:玻璃"
+   ]
+  },
+  {
+   "key": "zhuan",
+   "zh": "砖",
+   "py": "zhuan1",
+   "pt": "tijolo",
+   "items": [
+    "minecraft:brick",
+    "minecraft:bricks"
+   ],
+   "alts": [],
+   "audio": [
+    "w:砖"
+   ]
+  },
+  {
+   "key": "huoshi",
+   "zh": "火石",
+   "py": "huo3shi2",
+   "pt": "sílex (pederneira)",
+   "items": [
+    "minecraft:flint"
+   ],
+   "alts": [],
+   "audio": [
+    "s:huo3",
+    "s:shi2"
+   ]
+  },
+  {
+   "key": "zhayao",
+   "zh": "炸药",
+   "py": "zha4yao4",
+   "pt": "TNT, explosivo",
+   "items": [
+    "minecraft:tnt"
+   ],
+   "alts": [],
+   "audio": [
+    "w:炸药"
+   ]
+  },
+  {
+   "key": "gao",
+   "zh": "镐",
+   "py": "gao3",
+   "pt": "picareta",
+   "items": [
+    "#minecraft:pickaxes"
+   ],
+   "alts": [
+    {
+     "zh": "镐子",
+     "py": "gao3zi5"
+    }
+   ],
+   "audio": [
+    "s:gao3"
+   ]
+  },
+  {
+   "key": "futou",
+   "zh": "斧头",
+   "py": "fu3tou5",
+   "pt": "machado",
+   "items": [
+    "#minecraft:axes"
+   ],
+   "alts": [],
+   "audio": [
+    "s:fu3",
+    "w:头"
+   ]
+  },
+  {
+   "key": "chanzi",
+   "zh": "铲子",
+   "py": "chan3zi5",
+   "pt": "pá",
+   "items": [
+    "#minecraft:shovels"
+   ],
+   "alts": [],
+   "audio": [
+    "w:铲",
+    "w:子"
+   ]
+  },
+  {
+   "key": "jian",
+   "zh": "剑",
+   "py": "jian4",
+   "pt": "espada",
+   "items": [
+    "#minecraft:swords"
+   ],
+   "alts": [],
+   "audio": [
+    "s:jian4"
+   ]
+  },
+  {
+   "key": "chutou",
+   "zh": "锄头",
+   "py": "chu2tou5",
+   "pt": "enxada",
+   "items": [
+    "#minecraft:hoes"
+   ],
+   "alts": [],
+   "audio": [
+    "w:锄",
+    "w:头"
+   ]
+  },
+  {
+   "key": "gong",
+   "zh": "弓",
+   "py": "gong1",
+   "pt": "arco",
+   "items": [
+    "minecraft:bow"
+   ],
+   "alts": [],
+   "audio": [
+    "w:弓"
+   ]
+  },
+  {
+   "key": "nu",
+   "zh": "弩",
+   "py": "nu3",
+   "pt": "besta",
+   "items": [
+    "minecraft:crossbow"
+   ],
+   "alts": [],
+   "audio": [
+    "s:nu3"
+   ]
+  },
+  {
+   "key": "jian_flecha",
+   "zh": "箭",
+   "py": "jian4",
+   "pt": "flecha",
+   "items": [
+    "#minecraft:arrows"
+   ],
+   "alts": [],
+   "audio": [
+    "w:箭"
+   ]
+  },
+  {
+   "key": "dun",
+   "zh": "盾",
+   "py": "dun4",
+   "pt": "escudo",
+   "items": [
+    "minecraft:shield"
+   ],
+   "alts": [
+    {
+     "zh": "盾牌",
+     "py": "dun4pai2"
+    }
+   ],
+   "audio": [
+    "s:dun4"
+   ]
+  },
+  {
+   "key": "yugan",
+   "zh": "鱼竿",
+   "py": "yu2gan1",
+   "pt": "vara de pesca",
+   "items": [
+    "minecraft:fishing_rod"
+   ],
+   "alts": [],
+   "audio": [
+    "w:鱼",
+    "w:竿"
+   ]
+  },
+  {
+   "key": "jiandao",
+   "zh": "剪刀",
+   "py": "jian3dao1",
+   "pt": "tesoura",
+   "items": [
+    "minecraft:shears"
+   ],
+   "alts": [],
+   "audio": [
+    "w:剪刀"
+   ]
+  },
+  {
+   "key": "zhinanzhen",
+   "zh": "指南针",
+   "py": "zhi3nan2zhen1",
+   "pt": "bússola",
+   "items": [
+    "minecraft:compass",
+    "minecraft:recovery_compass"
+   ],
+   "alts": [],
+   "audio": [
+    "w:指南针"
+   ]
+  },
+  {
+   "key": "zhong",
+   "zh": "钟",
+   "py": "zhong1",
+   "pt": "relógio",
+   "items": [
+    "minecraft:clock"
+   ],
+   "alts": [],
+   "audio": [
+    "w:钟"
+   ]
+  },
+  {
+   "key": "ditu",
+   "zh": "地图",
+   "py": "di4tu2",
+   "pt": "mapa",
+   "items": [
+    "minecraft:map",
+    "minecraft:filled_map"
+   ],
+   "alts": [],
+   "audio": [
+    "w:地图"
+   ]
+  },
+  {
+   "key": "dahuoshi",
+   "zh": "打火石",
+   "py": "da3huo3shi2",
+   "pt": "isqueiro (pederneira e aço)",
+   "items": [
+    "minecraft:flint_and_steel"
+   ],
+   "alts": [],
+   "audio": [
+    "s:da2",
+    "s:huo3",
+    "s:shi2"
+   ]
+  },
+  {
+   "key": "tong_balde",
+   "zh": "桶",
+   "py": "tong3",
+   "pt": "balde",
+   "items": [
+    "minecraft:bucket"
+   ],
+   "alts": [],
+   "audio": [
+    "w:桶"
+   ]
+  },
+  {
+   "key": "shuitong",
+   "zh": "水桶",
+   "py": "shui3tong3",
+   "pt": "balde de água",
+   "items": [
+    "minecraft:water_bucket"
+   ],
+   "alts": [],
+   "audio": [
+    "s:shui2",
+    "s:tong3"
+   ]
+  },
+  {
+   "key": "toukui",
+   "zh": "头盔",
+   "py": "tou2kui1",
+   "pt": "capacete",
+   "items": [
+    "#minecraft:head_armor"
+   ],
+   "alts": [],
+   "audio": [
+    "s:tou2",
+    "s:kui1"
+   ]
+  },
+  {
+   "key": "xiongjia",
+   "zh": "胸甲",
+   "py": "xiong1jia3",
+   "pt": "peitoral",
+   "items": [
+    "#minecraft:chest_armor"
+   ],
+   "alts": [],
+   "audio": [
+    "w:胸",
+    "w:甲"
+   ]
+  },
+  {
+   "key": "hutui",
+   "zh": "护腿",
+   "py": "hu4tui3",
+   "pt": "calças (armadura)",
+   "items": [
+    "#minecraft:leg_armor"
+   ],
+   "alts": [],
+   "audio": [
+    "w:护",
+    "w:腿"
+   ]
+  },
+  {
+   "key": "xuezi",
+   "zh": "靴子",
+   "py": "xue1zi5",
+   "pt": "botas",
+   "items": [
+    "#minecraft:foot_armor"
+   ],
+   "alts": [],
+   "audio": [
+    "w:靴子"
+   ]
+  },
+  {
+   "key": "pingguo",
+   "zh": "苹果",
+   "py": "ping2guo3",
+   "pt": "maçã",
+   "items": [
+    "minecraft:apple"
+   ],
+   "alts": [],
+   "audio": [
+    "w:苹果"
+   ]
+  },
+  {
+   "key": "jinpingguo",
+   "zh": "金苹果",
+   "py": "jin1ping2guo3",
+   "pt": "maçã dourada",
+   "items": [
+    "minecraft:golden_apple",
+    "minecraft:enchanted_golden_apple"
+   ],
+   "alts": [],
+   "audio": [
+    "w:金",
+    "w:苹果"
+   ]
+  },
+  {
+   "key": "mianbao",
+   "zh": "面包",
+   "py": "mian4bao1",
+   "pt": "pão",
+   "items": [
+    "minecraft:bread"
+   ],
+   "alts": [],
+   "audio": [
+    "w:面包"
+   ]
+  },
+  {
+   "key": "xiaomai",
+   "zh": "小麦",
+   "py": "xiao3mai4",
+   "pt": "trigo",
+   "items": [
+    "minecraft:wheat",
+    "minecraft:hay_block"
+   ],
+   "alts": [],
+   "audio": [
+    "w:小麦"
+   ]
+  },
+  {
+   "key": "zhongzi",
+   "zh": "种子",
+   "py": "zhong3zi5",
+   "pt": "semente",
+   "items": [
+    "minecraft:wheat_seeds",
+    "minecraft:beetroot_seeds",
+    "minecraft:melon_seeds",
+    "minecraft:pumpkin_seeds",
+    "minecraft:torchflower_seeds"
+   ],
+   "alts": [],
+   "audio": [
+    "w:种子"
+   ]
+  },
+  {
+   "key": "huluobo",
+   "zh": "胡萝卜",
+   "py": "hu2luo2bo5",
+   "pt": "cenoura",
+   "items": [
+    "minecraft:carrot",
+    "minecraft:golden_carrot"
+   ],
+   "alts": [],
+   "audio": [
+    "w:胡",
+    "w:萝卜"
+   ]
+  },
+  {
+   "key": "tudou",
+   "zh": "土豆",
+   "py": "tu3dou4",
+   "pt": "batata",
+   "items": [
+    "minecraft:potato",
+    "minecraft:poisonous_potato"
+   ],
+   "alts": [],
+   "audio": [
+    "w:土豆"
+   ]
+  },
+  {
+   "key": "kaotudou",
+   "zh": "烤土豆",
+   "py": "kao3tu3dou4",
+   "pt": "batata assada",
+   "items": [
+    "minecraft:baked_potato"
+   ],
+   "alts": [],
+   "audio": [
+    "s:kao2",
+    "s:tu3",
+    "s:dou4"
+   ]
+  },
+  {
+   "key": "niurou",
+   "zh": "牛肉",
+   "py": "niu2rou4",
+   "pt": "carne de vaca",
+   "items": [
+    "minecraft:beef"
+   ],
+   "alts": [],
+   "audio": [
+    "w:牛",
+    "w:肉"
+   ]
+  },
+  {
+   "key": "niupai",
+   "zh": "牛排",
+   "py": "niu2pai2",
+   "pt": "bife",
+   "items": [
+    "minecraft:cooked_beef"
+   ],
+   "alts": [],
+   "audio": [
+    "w:牛",
+    "w:排"
+   ]
+  },
+  {
+   "key": "zhurou",
+   "zh": "猪肉",
+   "py": "zhu1rou4",
+   "pt": "carne de porco",
+   "items": [
+    "minecraft:porkchop",
+    "minecraft:cooked_porkchop"
+   ],
+   "alts": [],
+   "audio": [
+    "w:猪",
+    "w:肉"
+   ]
+  },
+  {
+   "key": "jirou",
+   "zh": "鸡肉",
+   "py": "ji1rou4",
+   "pt": "frango",
+   "items": [
+    "minecraft:chicken",
+    "minecraft:cooked_chicken"
+   ],
+   "alts": [],
+   "audio": [
+    "w:鸡",
+    "w:肉"
+   ]
+  },
+  {
+   "key": "yangrou",
+   "zh": "羊肉",
+   "py": "yang2rou4",
+   "pt": "carne de carneiro",
+   "items": [
+    "minecraft:mutton",
+    "minecraft:cooked_mutton"
+   ],
+   "alts": [],
+   "audio": [
+    "w:羊",
+    "w:肉"
+   ]
+  },
+  {
+   "key": "yu",
+   "zh": "鱼",
+   "py": "yu2",
+   "pt": "peixe",
+   "items": [
+    "#minecraft:fishes"
+   ],
+   "alts": [],
+   "audio": [
+    "w:鱼"
+   ]
+  },
+  {
+   "key": "jidan",
+   "zh": "鸡蛋",
+   "py": "ji1dan4",
+   "pt": "ovo",
+   "items": [
+    "minecraft:egg"
+   ],
+   "alts": [],
+   "audio": [
+    "w:鸡蛋"
+   ]
+  },
+  {
+   "key": "tang",
+   "zh": "糖",
+   "py": "tang2",
+   "pt": "açúcar",
+   "items": [
+    "minecraft:sugar"
+   ],
+   "alts": [],
+   "audio": [
+    "w:糖"
+   ]
+  },
+  {
+   "key": "dangao",
+   "zh": "蛋糕",
+   "py": "dan4gao1",
+   "pt": "bolo",
+   "items": [
+    "minecraft:cake"
+   ],
+   "alts": [],
+   "audio": [
+    "w:蛋糕"
+   ]
+  },
+  {
+   "key": "binggan",
+   "zh": "饼干",
+   "py": "bing3gan1",
+   "pt": "biscoito",
+   "items": [
+    "minecraft:cookie"
+   ],
+   "alts": [],
+   "audio": [
+    "w:饼干"
+   ]
+  },
+  {
+   "key": "xigua",
+   "zh": "西瓜",
+   "py": "xi1gua1",
+   "pt": "melancia",
+   "items": [
+    "minecraft:melon_slice",
+    "minecraft:melon"
+   ],
+   "alts": [],
+   "audio": [
+    "w:西瓜"
+   ]
+  },
+  {
+   "key": "nangua",
+   "zh": "南瓜",
+   "py": "nan2gua1",
+   "pt": "abóbora",
+   "items": [
+    "minecraft:pumpkin",
+    "minecraft:carved_pumpkin",
+    "minecraft:jack_o_lantern"
+   ],
+   "alts": [],
+   "audio": [
+    "w:南",
+    "w:瓜"
+   ]
+  },
+  {
+   "key": "mogu",
+   "zh": "蘑菇",
+   "py": "mo2gu5",
+   "pt": "cogumelo",
+   "items": [
+    "minecraft:brown_mushroom",
+    "minecraft:red_mushroom"
+   ],
+   "alts": [],
+   "audio": [
+    "w:蘑菇"
+   ]
+  },
+  {
+   "key": "mogutang",
+   "zh": "蘑菇汤",
+   "py": "mo2gu5tang1",
+   "pt": "sopa de cogumelo",
+   "items": [
+    "minecraft:mushroom_stew"
+   ],
+   "alts": [],
+   "audio": [
+    "w:蘑菇",
+    "w:汤"
+   ]
+  },
+  {
+   "key": "fengmi",
+   "zh": "蜂蜜",
+   "py": "feng1mi4",
+   "pt": "mel",
+   "items": [
+    "minecraft:honey_bottle"
+   ],
+   "alts": [],
+   "audio": [
+    "w:蜂蜜"
+   ]
+  },
+  {
+   "key": "jiangguo",
+   "zh": "浆果",
+   "py": "jiang1guo3",
+   "pt": "frutinhas",
+   "items": [
+    "minecraft:sweet_berries",
+    "minecraft:glow_berries"
+   ],
+   "alts": [],
+   "audio": [
+    "s:jiang1",
+    "s:guo3"
+   ]
+  },
+  {
+   "key": "niunai",
+   "zh": "牛奶",
+   "py": "niu2nai3",
+   "pt": "leite",
+   "items": [
+    "minecraft:milk_bucket"
+   ],
+   "alts": [],
+   "audio": [
+    "w:牛奶"
+   ]
+  },
+  {
+   "key": "wan",
+   "zh": "碗",
+   "py": "wan3",
+   "pt": "tigela",
+   "items": [
+    "minecraft:bowl"
+   ],
+   "alts": [],
+   "audio": [
+    "w:碗"
+   ]
+  },
+  {
+   "key": "pingzi",
+   "zh": "瓶子",
+   "py": "ping2zi5",
+   "pt": "garrafa",
+   "items": [
+    "minecraft:glass_bottle"
+   ],
+   "alts": [],
+   "audio": [
+    "w:瓶子"
+   ]
+  },
+  {
+   "key": "yaoshui",
+   "zh": "药水",
+   "py": "yao4shui3",
+   "pt": "poção",
+   "items": [
+    "minecraft:potion",
+    "minecraft:splash_potion",
+    "minecraft:lingering_potion"
+   ],
+   "alts": [],
+   "audio": [
+    "w:药",
+    "w:水"
+   ]
+  },
+  {
+   "key": "xian",
+   "zh": "线",
+   "py": "xian4",
+   "pt": "linha",
+   "items": [
+    "minecraft:string"
+   ],
+   "alts": [],
+   "audio": [
+    "w:线"
+   ]
+  },
+  {
+   "key": "yumao",
+   "zh": "羽毛",
+   "py": "yu3mao2",
+   "pt": "pena",
+   "items": [
+    "minecraft:feather"
+   ],
+   "alts": [],
+   "audio": [
+    "w:羽毛"
+   ]
+  },
+  {
+   "key": "pi",
+   "zh": "皮",
+   "py": "pi2",
+   "pt": "couro",
+   "items": [
+    "minecraft:leather",
+    "minecraft:rabbit_hide"
+   ],
+   "alts": [
+    {
+     "zh": "皮革",
+     "py": "pi2ge2"
+    }
+   ],
+   "audio": [
+    "w:皮"
+   ]
+  },
+  {
+   "key": "gutou",
+   "zh": "骨头",
+   "py": "gu3tou5",
+   "pt": "osso",
+   "items": [
+    "minecraft:bone"
+   ],
+   "alts": [],
+   "audio": [
+    "w:骨头"
+   ]
+  },
+  {
+   "key": "gufen",
+   "zh": "骨粉",
+   "py": "gu3fen3",
+   "pt": "farinha de osso",
+   "items": [
+    "minecraft:bone_meal"
+   ],
+   "alts": [],
+   "audio": [
+    "s:gu2",
+    "s:fen3"
+   ]
+  },
+  {
+   "key": "furou",
+   "zh": "腐肉",
+   "py": "fu3rou4",
+   "pt": "carne podre",
+   "items": [
+    "minecraft:rotten_flesh"
+   ],
+   "alts": [],
+   "audio": [
+    "s:fu3",
+    "s:rou4"
+   ]
+  },
+  {
+   "key": "huoyao",
+   "zh": "火药",
+   "py": "huo3yao4",
+   "pt": "pólvora",
+   "items": [
+    "minecraft:gunpowder"
+   ],
+   "alts": [],
+   "audio": [
+    "w:火药"
+   ]
+  },
+  {
+   "key": "zhizhuyan",
+   "zh": "蜘蛛眼",
+   "py": "zhi1zhu1yan3",
+   "pt": "olho de aranha",
+   "items": [
+    "minecraft:spider_eye",
+    "minecraft:fermented_spider_eye"
+   ],
+   "alts": [],
+   "audio": [
+    "w:蜘蛛",
+    "w:眼"
+   ]
+  },
+  {
+   "key": "zhenzhu",
+   "zh": "珍珠",
+   "py": "zhen1zhu1",
+   "pt": "pérola (do Ender)",
+   "items": [
+    "minecraft:ender_pearl"
+   ],
+   "alts": [],
+   "audio": [
+    "w:珍珠"
+   ]
+  },
+  {
+   "key": "shu",
+   "zh": "书",
+   "py": "shu1",
+   "pt": "livro",
+   "items": [
+    "minecraft:book",
+    "minecraft:writable_book",
+    "minecraft:written_book",
+    "minecraft:enchanted_book"
+   ],
+   "alts": [],
+   "audio": [
+    "w:书"
+   ]
+  },
+  {
+   "key": "shujia",
+   "zh": "书架",
+   "py": "shu1jia4",
+   "pt": "estante",
+   "items": [
+    "minecraft:bookshelf",
+    "minecraft:chiseled_bookshelf"
+   ],
+   "alts": [],
+   "audio": [
+    "w:书架"
+   ]
+  },
+  {
+   "key": "zhi",
+   "zh": "纸",
+   "py": "zhi3",
+   "pt": "papel",
+   "items": [
+    "minecraft:paper"
+   ],
+   "alts": [],
+   "audio": [
+    "w:纸"
+   ]
+  },
+  {
+   "key": "hua_quadro",
+   "zh": "画",
+   "py": "hua4",
+   "pt": "quadro",
+   "items": [
+    "minecraft:painting"
+   ],
+   "alts": [],
+   "audio": [
+    "w:画"
+   ]
+  },
+  {
+   "key": "denglong",
+   "zh": "灯笼",
+   "py": "deng1long5",
+   "pt": "lanterna",
+   "items": [
+    "minecraft:lantern",
+    "minecraft:soul_lantern"
+   ],
+   "alts": [],
+   "audio": [
+    "w:灯笼"
+   ]
+  },
+  {
+   "key": "lazhu",
+   "zh": "蜡烛",
+   "py": "la4zhu2",
+   "pt": "vela",
+   "items": [
+    "#minecraft:candles"
+   ],
+   "alts": [],
+   "audio": [
+    "w:蜡烛"
+   ]
+  },
+  {
+   "key": "lingdang",
+   "zh": "铃铛",
+   "py": "ling2dang1",
+   "pt": "sino",
+   "items": [
+    "minecraft:bell"
+   ],
+   "alts": [],
+   "audio": [
+    "s:ling2",
+    "s:dang1"
+   ]
+  },
+  {
+   "key": "paizi",
+   "zh": "牌子",
+   "py": "pai2zi5",
+   "pt": "placa",
+   "items": [
+    "#minecraft:signs",
+    "#minecraft:hanging_signs"
+   ],
+   "alts": [],
+   "audio": [
+    "w:牌子"
+   ]
+  },
+  {
+   "key": "louti",
+   "zh": "楼梯",
+   "py": "lou2ti1",
+   "pt": "escada (degraus)",
+   "items": [
+    "#minecraft:stairs"
+   ],
+   "alts": [],
+   "audio": [
+    "w:楼梯"
+   ]
+  },
+  {
+   "key": "zhalan",
+   "zh": "栅栏",
+   "py": "zha4lan2",
+   "pt": "cerca",
+   "items": [
+    "#minecraft:fences",
+    "#minecraft:fence_gates"
+   ],
+   "alts": [],
+   "audio": [
+    "s:zha4",
+    "s:lan2"
+   ]
+  },
+  {
+   "key": "anniu",
+   "zh": "按钮",
+   "py": "an4niu3",
+   "pt": "botão",
+   "items": [
+    "#minecraft:buttons"
+   ],
+   "alts": [],
+   "audio": [
+    "s:an4",
+    "s:niu3"
+   ]
+  },
+  {
+   "key": "tiezhen",
+   "zh": "铁砧",
+   "py": "tie3zhen1",
+   "pt": "bigorna",
+   "items": [
+    "#minecraft:anvil"
+   ],
+   "alts": [],
+   "audio": [
+    "s:tie3",
+    "s:zhen1"
+   ]
+  },
+  {
+   "key": "fumotai",
+   "zh": "附魔台",
+   "py": "fu4mo2tai2",
+   "pt": "mesa de encantamento",
+   "items": [
+    "minecraft:enchanting_table"
+   ],
+   "alts": [],
+   "audio": [
+    "s:fu4",
+    "s:mo2",
+    "s:tai2"
+   ]
+  },
+  {
+   "key": "tiegui",
+   "zh": "铁轨",
+   "py": "tie3gui3",
+   "pt": "trilho",
+   "items": [
+    "minecraft:rail",
+    "minecraft:powered_rail",
+    "minecraft:detector_rail",
+    "minecraft:activator_rail"
+   ],
+   "alts": [],
+   "audio": [
+    "s:tie2",
+    "s:gui3"
+   ]
+  },
+  {
+   "key": "kuangche",
+   "zh": "矿车",
+   "py": "kuang4che1",
+   "pt": "carrinho de mina",
+   "items": [
+    "minecraft:minecart",
+    "minecraft:chest_minecart",
+    "minecraft:furnace_minecart",
+    "minecraft:hopper_minecart",
+    "minecraft:tnt_minecart"
+   ],
+   "alts": [],
+   "audio": [
+    "w:矿",
+    "w:车"
+   ]
+  },
+  {
+   "key": "maan",
+   "zh": "马鞍",
+   "py": "ma3'an1",
+   "pt": "sela",
+   "items": [
+    "minecraft:saddle"
+   ],
+   "alts": [],
+   "audio": [
+    "s:ma3",
+    "s:an1"
+   ]
+  },
+  {
+   "key": "shengzi",
+   "zh": "绳子",
+   "py": "sheng2zi5",
+   "pt": "corda (laço)",
+   "items": [
+    "minecraft:lead"
+   ],
+   "alts": [],
+   "audio": [
+    "w:绳子"
+   ]
+  }
+ ]
+}

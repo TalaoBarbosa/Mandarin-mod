@@ -1,0 +1,922 @@
+{
+ "w.mutou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/mutou",
+    "stream": false
+   }
+  ]
+ },
+ "w.muban": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/muban",
+    "stream": false
+   }
+  ]
+ },
+ "w.gunzi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/gunzi",
+    "stream": false
+   }
+  ]
+ },
+ "w.gongzuotai": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/gongzuotai",
+    "stream": false
+   }
+  ]
+ },
+ "w.xiangzi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/xiangzi",
+    "stream": false
+   }
+  ]
+ },
+ "w.men": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/men",
+    "stream": false
+   }
+  ]
+ },
+ "w.chuang": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/chuang",
+    "stream": false
+   }
+  ]
+ },
+ "w.chuan": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/chuan",
+    "stream": false
+   }
+  ]
+ },
+ "w.huoba": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/huoba",
+    "stream": false
+   }
+  ]
+ },
+ "w.tizi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tizi",
+    "stream": false
+   }
+  ]
+ },
+ "w.shumiao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/shumiao",
+    "stream": false
+   }
+  ]
+ },
+ "w.shuye": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/shuye",
+    "stream": false
+   }
+  ]
+ },
+ "w.hua": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/hua",
+    "stream": false
+   }
+  ]
+ },
+ "w.cao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/cao",
+    "stream": false
+   }
+  ]
+ },
+ "w.tu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tu",
+    "stream": false
+   }
+  ]
+ },
+ "w.shazi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/shazi",
+    "stream": false
+   }
+  ]
+ },
+ "w.shitou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/shitou",
+    "stream": false
+   }
+  ]
+ },
+ "w.ganzhe": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/ganzhe",
+    "stream": false
+   }
+  ]
+ },
+ "w.xianrenzhang": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/xianrenzhang",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhuzi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhuzi",
+    "stream": false
+   }
+  ]
+ },
+ "w.heiyaoshi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/heiyaoshi",
+    "stream": false
+   }
+  ]
+ },
+ "w.bing": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/bing",
+    "stream": false
+   }
+  ]
+ },
+ "w.xue": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/xue",
+    "stream": false
+   }
+  ]
+ },
+ "w.xueqiu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/xueqiu",
+    "stream": false
+   }
+  ]
+ },
+ "w.yangmao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/yangmao",
+    "stream": false
+   }
+  ]
+ },
+ "w.mei": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/mei",
+    "stream": false
+   }
+  ]
+ },
+ "w.meikuang": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/meikuang",
+    "stream": false
+   }
+  ]
+ },
+ "w.tiekuang": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tiekuang",
+    "stream": false
+   }
+  ]
+ },
+ "w.tie": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tie",
+    "stream": false
+   }
+  ]
+ },
+ "w.tiekuai": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tiekuai",
+    "stream": false
+   }
+  ]
+ },
+ "w.jinzi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/jinzi",
+    "stream": false
+   }
+  ]
+ },
+ "w.zuanshi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zuanshi",
+    "stream": false
+   }
+  ]
+ },
+ "w.lvbaoshi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/lvbaoshi",
+    "stream": false
+   }
+  ]
+ },
+ "w.hongshi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/hongshi",
+    "stream": false
+   }
+  ]
+ },
+ "w.tong": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tong",
+    "stream": false
+   }
+  ]
+ },
+ "w.luzi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/luzi",
+    "stream": false
+   }
+  ]
+ },
+ "w.boli": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/boli",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhuan": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhuan",
+    "stream": false
+   }
+  ]
+ },
+ "w.huoshi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/huoshi",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhayao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhayao",
+    "stream": false
+   }
+  ]
+ },
+ "w.gao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/gao",
+    "stream": false
+   }
+  ]
+ },
+ "w.futou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/futou",
+    "stream": false
+   }
+  ]
+ },
+ "w.chanzi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/chanzi",
+    "stream": false
+   }
+  ]
+ },
+ "w.jian": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/jian",
+    "stream": false
+   }
+  ]
+ },
+ "w.chutou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/chutou",
+    "stream": false
+   }
+  ]
+ },
+ "w.gong": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/gong",
+    "stream": false
+   }
+  ]
+ },
+ "w.nu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/nu",
+    "stream": false
+   }
+  ]
+ },
+ "w.jian_flecha": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/jian_flecha",
+    "stream": false
+   }
+  ]
+ },
+ "w.dun": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/dun",
+    "stream": false
+   }
+  ]
+ },
+ "w.yugan": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/yugan",
+    "stream": false
+   }
+  ]
+ },
+ "w.jiandao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/jiandao",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhinanzhen": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhinanzhen",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhong": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhong",
+    "stream": false
+   }
+  ]
+ },
+ "w.ditu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/ditu",
+    "stream": false
+   }
+  ]
+ },
+ "w.dahuoshi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/dahuoshi",
+    "stream": false
+   }
+  ]
+ },
+ "w.tong_balde": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tong_balde",
+    "stream": false
+   }
+  ]
+ },
+ "w.shuitong": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/shuitong",
+    "stream": false
+   }
+  ]
+ },
+ "w.toukui": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/toukui",
+    "stream": false
+   }
+  ]
+ },
+ "w.xiongjia": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/xiongjia",
+    "stream": false
+   }
+  ]
+ },
+ "w.hutui": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/hutui",
+    "stream": false
+   }
+  ]
+ },
+ "w.xuezi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/xuezi",
+    "stream": false
+   }
+  ]
+ },
+ "w.pingguo": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/pingguo",
+    "stream": false
+   }
+  ]
+ },
+ "w.jinpingguo": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/jinpingguo",
+    "stream": false
+   }
+  ]
+ },
+ "w.mianbao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/mianbao",
+    "stream": false
+   }
+  ]
+ },
+ "w.xiaomai": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/xiaomai",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhongzi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhongzi",
+    "stream": false
+   }
+  ]
+ },
+ "w.huluobo": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/huluobo",
+    "stream": false
+   }
+  ]
+ },
+ "w.tudou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tudou",
+    "stream": false
+   }
+  ]
+ },
+ "w.kaotudou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/kaotudou",
+    "stream": false
+   }
+  ]
+ },
+ "w.niurou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/niurou",
+    "stream": false
+   }
+  ]
+ },
+ "w.niupai": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/niupai",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhurou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhurou",
+    "stream": false
+   }
+  ]
+ },
+ "w.jirou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/jirou",
+    "stream": false
+   }
+  ]
+ },
+ "w.yangrou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/yangrou",
+    "stream": false
+   }
+  ]
+ },
+ "w.yu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/yu",
+    "stream": false
+   }
+  ]
+ },
+ "w.jidan": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/jidan",
+    "stream": false
+   }
+  ]
+ },
+ "w.tang": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tang",
+    "stream": false
+   }
+  ]
+ },
+ "w.dangao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/dangao",
+    "stream": false
+   }
+  ]
+ },
+ "w.binggan": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/binggan",
+    "stream": false
+   }
+  ]
+ },
+ "w.xigua": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/xigua",
+    "stream": false
+   }
+  ]
+ },
+ "w.nangua": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/nangua",
+    "stream": false
+   }
+  ]
+ },
+ "w.mogu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/mogu",
+    "stream": false
+   }
+  ]
+ },
+ "w.mogutang": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/mogutang",
+    "stream": false
+   }
+  ]
+ },
+ "w.fengmi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/fengmi",
+    "stream": false
+   }
+  ]
+ },
+ "w.jiangguo": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/jiangguo",
+    "stream": false
+   }
+  ]
+ },
+ "w.niunai": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/niunai",
+    "stream": false
+   }
+  ]
+ },
+ "w.wan": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/wan",
+    "stream": false
+   }
+  ]
+ },
+ "w.pingzi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/pingzi",
+    "stream": false
+   }
+  ]
+ },
+ "w.yaoshui": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/yaoshui",
+    "stream": false
+   }
+  ]
+ },
+ "w.xian": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/xian",
+    "stream": false
+   }
+  ]
+ },
+ "w.yumao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/yumao",
+    "stream": false
+   }
+  ]
+ },
+ "w.pi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/pi",
+    "stream": false
+   }
+  ]
+ },
+ "w.gutou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/gutou",
+    "stream": false
+   }
+  ]
+ },
+ "w.gufen": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/gufen",
+    "stream": false
+   }
+  ]
+ },
+ "w.furou": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/furou",
+    "stream": false
+   }
+  ]
+ },
+ "w.huoyao": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/huoyao",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhizhuyan": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhizhuyan",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhenzhu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhenzhu",
+    "stream": false
+   }
+  ]
+ },
+ "w.shu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/shu",
+    "stream": false
+   }
+  ]
+ },
+ "w.shujia": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/shujia",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhi",
+    "stream": false
+   }
+  ]
+ },
+ "w.hua_quadro": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/hua_quadro",
+    "stream": false
+   }
+  ]
+ },
+ "w.denglong": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/denglong",
+    "stream": false
+   }
+  ]
+ },
+ "w.lazhu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/lazhu",
+    "stream": false
+   }
+  ]
+ },
+ "w.lingdang": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/lingdang",
+    "stream": false
+   }
+  ]
+ },
+ "w.paizi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/paizi",
+    "stream": false
+   }
+  ]
+ },
+ "w.louti": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/louti",
+    "stream": false
+   }
+  ]
+ },
+ "w.zhalan": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/zhalan",
+    "stream": false
+   }
+  ]
+ },
+ "w.anniu": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/anniu",
+    "stream": false
+   }
+  ]
+ },
+ "w.tiezhen": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tiezhen",
+    "stream": false
+   }
+  ]
+ },
+ "w.fumotai": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/fumotai",
+    "stream": false
+   }
+  ]
+ },
+ "w.tiegui": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/tiegui",
+    "stream": false
+   }
+  ]
+ },
+ "w.kuangche": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/kuangche",
+    "stream": false
+   }
+  ]
+ },
+ "w.maan": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/maan",
+    "stream": false
+   }
+  ]
+ },
+ "w.shengzi": {
+  "sounds": [
+   {
+    "name": "mandarimcraft:w/shengzi",
+    "stream": false
+   }
+  ]
+ }
+}

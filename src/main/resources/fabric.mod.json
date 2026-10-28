@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "mandarimcraft",
+  "version": "${version}",
+  "name": "Mandarim Craft",
+  "description": "Ao pegar um item pela primeira vez, diga o nome dele em chinês (com os tons certos) antes do tempo acabar. Errou, perdeu o item.",
+  "authors": ["Tales"],
+  "license": "MIT",
+  "icon": "assets/mandarimcraft/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.tales.mandarimcraft.MandarimCraft"],
+    "client": ["com.tales.mandarimcraft.client.MandarimClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
