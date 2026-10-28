@@ -171,7 +171,8 @@ public final class Speech {
             if (modelWords != null) for (String tok : p.split(" ")) if (!modelWords.contains(tok)) missing.add(tok);
             if (seen.add(p)) a.add(p);
         }
-        a.add("[unk]");
+        // sem "[unk]": com ele, a pronúncia de quem está aprendendo virava "não entendi"; sem ele o Vosk escolhe a
+        // palavra mais parecida e quem decide é a comparação com a pedida e o tom (com só ruído ele continua devolvendo vazio)
         if (!missing.isEmpty()) MandarimCraft.LOG.warn("Caracteres que o modelo não conhece: {}", missing);
         return a.toString();
     }

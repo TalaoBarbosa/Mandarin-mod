@@ -15,7 +15,7 @@ import java.nio.file.Path;
 public final class ClientConfig {
     public int seconds = 7;            // tempo para falar
     public String tones = "rigido";    // rigido | normal | leve
-    public int retries = 1;            // quando só o tom sai errado: mais quantas tentativas na mesma vez
+    public int retries = 1;            // quando erra: mais quantas tentativas na mesma vez
     public String hint = "nenhuma";    // nenhuma | hanzi | pinyin
     public double refHz = 0;           // altura média da voz (calibrar); 0 = ainda não calibrou
     public int samples = 0;            // quantas falas já entraram na média
@@ -50,12 +50,15 @@ public final class ClientConfig {
         return switch (tones) { case "leve" -> 1.3; case "normal" -> 1.15; default -> 1.0; };
     }
 
-    /** junta a altura desta fala na média da voz (em escala log, para não puxar demais por uma fala só) */
+    /**
+     * junta a altura desta fala na média da voz (em escala log). Peso pequeno: a calibração é uma frase inteira, e uma
+     * palavra solta puxa pelo tom dela (3º tom baixo, 1º alto); antes a 1ª palavra depois de calibrar já valia metade.
+     */
     public void addVoice(double hz) {
         if (hz < 60 || hz > 450) return;
         if (refHz <= 0 || samples == 0) { refHz = hz; samples = 1; }
         else {
-            double w = samples < 5 ? 1.0 / (samples + 1) : 0.15;
+            double w = 0.08;
             refHz = Math.exp((1 - w) * Math.log(refHz) + w * Math.log(hz));
             samples++;
         }

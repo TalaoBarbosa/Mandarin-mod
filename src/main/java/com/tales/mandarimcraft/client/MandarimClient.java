@@ -34,7 +34,7 @@ public class MandarimClient implements ClientModInitializer {
                 literal("hanyu")
                         .executes(c -> {
                             ClientConfig k = ClientConfig.get();
-                            c.getSource().sendFeedback(Text.literal("汉语: tons " + k.tones + " · tempo " + k.seconds + " s · dica " + k.hint + " · segunda chance no tom: " + k.retries +
+                            c.getSource().sendFeedback(Text.literal("汉语: tons " + k.tones + " · tempo " + k.seconds + " s · dica " + k.hint + " · chances extras: " + k.retries +
                                     " · voz " + (k.refHz > 0 ? Math.round(k.refHz) + " Hz" : "não calibrada") + " · reconhecimento: " + Speech.status() +
                                     "\n/hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <s> · dica nenhuma|hanzi|pinyin · chances <0-2>").formatted(Formatting.GRAY));
                             return 1;
@@ -67,7 +67,7 @@ public class MandarimClient implements ClientModInitializer {
                         })))
                         .then(literal("chances").then(argument("n", IntegerArgumentType.integer(0, 2)).executes(c -> {
                             ClientConfig.get().retries = IntegerArgumentType.getInteger(c, "n"); ClientConfig.get().save();
-                            c.getSource().sendFeedback(Text.literal("Chances extras quando só o tom sai errado: " + ClientConfig.get().retries)); return 1;
+                            c.getSource().sendFeedback(Text.literal("Chances extras quando erra: " + ClientConfig.get().retries)); return 1;
                         })))
                         .then(literal("dica").then(argument("tipo", StringArgumentType.word())
                                 .suggests((c, b) -> { b.suggest("nenhuma"); b.suggest("hanzi"); b.suggest("pinyin"); return b.buildFuture(); })

@@ -18,7 +18,8 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 
 - Em cada mundo, ative com **`/mandarim comecar`**. O que você já tinha no inventário também vira desafio, mas errar não tira esses itens; só os novos.
 - Na primeira fala o mod pede para você ler uma frase (`你好，我是巴西人。`) e aprende a altura da sua voz. Dá para refazer com `/hanyu calibrar`.
-- Quando só o **tom** sai errado, você ganha mais uma chance na hora (`/hanyu chances 0` para tirar).
+- Errou (ou o mod não entendeu), você ganha mais uma chance na hora; se foi só o **tom**, ele toca a pronúncia antes (`/hanyu chances 0` para tirar).
+- Cada tentativa fica registrada no `logs/latest.log` (o que o mod ouviu, os tons e o volume do microfone), para descobrir o que deu errado.
 
 ### Comandos do mundo
 | comando | o que faz |

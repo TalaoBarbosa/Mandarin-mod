@@ -27,6 +27,8 @@ public final class Mic {
      * (Windows: Privacidade → Microfone; macOS: permissão do Minecraft/Java). Não é o jogador que ficou quieto.
      */
     public volatile boolean mute;
+    /** maior amostra da última gravação (0..32767), para o log */
+    public volatile int peak;
     /** quanto silêncio depois de falar conta como "terminou" (na calibração é maior: a frase tem vírgula) */
     public volatile int endSilenceMs = 700;
 
@@ -77,7 +79,7 @@ public final class Mic {
             long now = System.currentTimeMillis();
             if (noise < 0) noise = rms;
             else if (!speechStarted) noise = Math.min(noise * 1.02 + 1e-5, rms < noise ? 0.9 * noise + 0.1 * rms : noise * 1.002);
-            double thr = Math.max(0.012, noise * 3.5);
+            double thr = Math.max(0.006, noise * 3.5);   // piso -44 dBFS: com 0.012, voz baixa de mic de notebook passava batida
             level = (float) Math.min(1.0, rms / 0.12);
             if (rms > thr) {
                 if (++loudRun >= 3 && now - t0 > 150) { speechStarted = true; lastVoiceMs = now; }
@@ -102,9 +104,13 @@ public final class Mic {
             x[i] = s / 32768f;
             peak = Math.max(peak, Math.abs(s));
         }
+        this.peak = peak;
         mute = peak <= 2;
         return rate == 16000f ? x : resample(x, rate, 16000f);
     }
+
+    /** a taxa em que o microfone abriu (o áudio devolvido por stop() é sempre 16 kHz) */
+    public float rate() { return rate; }
 
     public void stopQuiet() {
         if (running || line != null) stop();

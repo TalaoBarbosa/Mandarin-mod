@@ -38,7 +38,7 @@ public final class Desafio {
     static boolean practice, calibrateThenChallenge;
     static int attempt;
     static long deadline, showUntil, retryAt, playAt;
-    static String playKey;
+    static String playKey, retryTitle = "";
     /** muda a cada cancelamento: a análise que terminar depois disso é de um desafio que já acabou e é jogada fora */
     static int round;
     // o que a tela mostra
@@ -53,7 +53,8 @@ public final class Desafio {
     // ------------------------------------------------------------ entradas
 
     public static void onChallenge(Payloads.Challenge c) {
-        if (state != St.IDLE && state != St.SHOW) { pending = c; return; }
+        // espera até a tela do resultado acabar: dá para ler o que o mod ouviu e escutar a pronúncia antes de falar de novo
+        if (state != St.IDLE) { pending = c; return; }
         cur = c; practice = false; attempt = 1;
         word = Vocab.get(c.word());
         if (word == null) { cur = null; return; }
@@ -117,7 +118,7 @@ public final class Desafio {
         deadline = System.currentTimeMillis() + cfg().seconds * 1000L;
         if (practice) { title = "Treino: diga o nome de um item"; line1 = "Nada se perde aqui."; line2 = ""; line3 = ""; }
         else {
-            title = attempt > 1 ? "Mais uma vez, cuidado com o tom:" : "Diga em chinês:";
+            title = attempt > 1 ? retryTitle : "Diga em chinês:";
             line1 = word.pt;
             line2 = switch (cfg().hint) { case "hanzi" -> word.zh; case "pinyin" -> word.zh + "  " + word.pretty(); default -> ""; };
             line3 = "";
@@ -179,11 +180,13 @@ public final class Desafio {
         state = St.THINK;
         title = "Analisando…"; line3 = "";
         final int r0 = round;
+        final String mic = micInfo(audio, spoke);
         if (was == St.CALIBRATE) {
             WORK.submit(() -> {
                 double[] f0 = spoke ? Pitch.clean(Pitch.yin(audio)) : new double[0];
                 int voiced = 0; for (double f : f0) if (f > 0) voiced++;
                 final double m = Pitch.median(f0); final int v = voiced;
+                MandarimCraft.LOG.info("[calibração] altura {} Hz, {} quadros com voz | {}", Math.round(m), v, mic);
                 MinecraftClient.getInstance().execute(() -> { if (r0 == round) onCalibrated(m, v); });
             });
             return;
@@ -193,8 +196,23 @@ public final class Desafio {
         final double ref = cfg().refHz, tol = cfg().tol();
         WORK.submit(() -> {
             Result r = analyze(audio, spoke, target, prac, ref, tol);
+            logAttempt(target, r, ref, mic);
             MinecraftClient.getInstance().execute(() -> { if (r0 == round) onResult(r); });
         });
+    }
+
+    /** volume e duração da gravação, para o log */
+    private static String micInfo(float[] audio, boolean spoke) {
+        String pk = MIC.peak > 0 ? Math.round(20 * Math.log10(MIC.peak / 32768.0)) + " dBFS" : "zero";
+        return String.format("mic: pico %s, fala %s, %.1f s a %d Hz", pk, spoke ? "detectada" : "não detectada", audio.length / 16000.0, Math.round(MIC.rate()));
+    }
+
+    /** uma linha por tentativa no latest.log: o que o mod ouviu e por que aceitou ou não */
+    private static void logAttempt(Vocab.Word target, Result r, double ref, String mic) {
+        MandarimCraft.LOG.info("[tentativa] pedida: {} | ouvi: '{}' | sílabas {} | tons: {} | voz {} Hz (ref {} Hz) | {}",
+                target != null ? target.zh : "(treino)", r.heard(), r.syllablesOk() ? "ok" : "erradas",
+                r.tones() == null ? "-" : (r.tones().ok() ? "ok " : "erro ") + r.tones().summary(),
+                r.tones() == null ? "-" : Math.round(r.tones().medianHz()), Math.round(ref), mic);
     }
 
     private static void onCalibrated(double med, int voiced) {
@@ -231,9 +249,10 @@ public final class Desafio {
 
     private static Result analyze(float[] audio, boolean spoke, Vocab.Word target, boolean prac, double ref, double tol) {
         try {
-            if (!spoke) return new Result(false, false, false, "", null, null, null);
+            // reconhece mesmo se o detector de fala não disparou (voz baixa): com só silêncio o Vosk devolve vazio
             Speech.Heard h = Speech.recognize(audio);
             String heard = h == null ? "" : h.joined();
+            if (!spoke && heard.isEmpty()) return new Result(false, false, false, "", null, null, null);
             List<Answer.Form> all = new ArrayList<>();
             for (Vocab.Word w : Vocab.all()) all.addAll(forms(w));
             Vocab.Word tw = target;
@@ -265,7 +284,8 @@ public final class Desafio {
     // ------------------------------------------------------------ resultado (thread do jogo)
 
     private static void onResult(Result r) {
-        if (r.tones() != null && r.tones().medianHz() > 0) cfg().addVoice(r.tones().medianHz());
+        // só fala aceita entra na média da voz: tentativa errada (ou ruído) puxaria a referência dos tons para longe
+        if (r.pass() && r.tones().medianHz() > 0) cfg().addVoice(r.tones().medianHz());
         long now = System.currentTimeMillis();
         String tons = r.tones() != null ? r.tones().summary() : "";
         if (practice) {
@@ -287,11 +307,20 @@ public final class Desafio {
             cur = null;
             return;
         }
-        if (r.syllablesOk() && attempt <= cfg().retries) {
+        if (attempt <= cfg().retries) {   // outra chance em qualquer erro: o reconhecedor também se engana, até com nativos
             attempt++;
-            good = false; color = 0xFFFFFF55; state = St.RETRY_WAIT; retryAt = now + 2600;
-            title = "Quase! As sílabas estão certas, o tom não:"; line1 = tons; line2 = ""; line3 = "";
-            playKey = word.key; playAt = now + 300; retryCalibrate = false;
+            good = false; color = 0xFFFFFF55; state = St.RETRY_WAIT; retryCalibrate = false;
+            if (r.syllablesOk()) {
+                title = "Quase! As sílabas estão certas, o tom não:"; line1 = tons;
+                retryTitle = "Mais uma vez, cuidado com o tom:";
+                playKey = word.key; playAt = now + 300; retryAt = now + 2600;
+            } else {   // sem tocar a pronúncia: aqui ainda vale lembrar da palavra
+                title = !r.spoke() ? "Não ouvi nada." : r.heard().isEmpty() ? "Não entendi." : "Ouvi: " + r.heard();
+                line1 = r.spoke() && !r.heard().isEmpty() ? "Tente de novo." : "Fale de novo, mais perto do microfone.";
+                retryTitle = "Mais uma vez:";
+                retryAt = now + 1800;
+            }
+            line2 = ""; line3 = "";
             return;
         }
         sendAnswer(false, r.heard());
