@@ -3,6 +3,8 @@ package com.tales.mandarimcraft;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.tales.mandarimcraft.net.Payloads;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -11,6 +13,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -25,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Lado do servidor (também roda no mundo de um jogador só): vê quando entra um item novo no inventário,
@@ -90,7 +94,10 @@ public class MandarimCraft implements ModInitializer {
                         .then(CommandManager.literal("palavras").executes(MandarimCraft::cmdList))
                         .then(CommandManager.literal("faltam").executes(MandarimCraft::cmdMissing))
                         .then(CommandManager.literal("esquecer")
-                                .then(CommandManager.argument("palavra", StringArgumentType.word()).executes(MandarimCraft::cmdForget)))));
+                                // greedyString: word() só aceita a-z, 0-9 e _-.+, então 钻石 nem chegava ao comando
+                                .then(CommandManager.argument("palavra", StringArgumentType.greedyString())
+                                        .suggests(MandarimCraft::suggestLearned)
+                                        .executes(MandarimCraft::cmdForget)))));
         LOG.info("Mandarim Craft pronto");
     }
 
@@ -238,10 +245,22 @@ public class MandarimCraft implements ModInitializer {
         return 1;
     }
 
+    /** sugere as palavras que o jogador já aprendeu (em 汉字) e "tudo" */
+    private static CompletableFuture<Suggestions> suggestLearned(CommandContext<ServerCommandSource> c, SuggestionsBuilder b) {
+        List<String> opts = new ArrayList<>();
+        ServerPlayerEntity p = c.getSource().getPlayer();
+        if (p != null && data != null) for (String k : data.get(p.getUuid()).learned.keySet()) {
+            Vocab.Word w = Vocab.get(k);
+            if (w != null) opts.add(w.zh);
+        }
+        opts.add("tudo");
+        return CommandSource.suggestMatching(opts, b);
+    }
+
     private static int cmdForget(CommandContext<ServerCommandSource> c) throws CommandSyntaxException {
         ServerPlayerEntity p = c.getSource().getPlayerOrThrow();
         WorldData.PlayerData pd = data.get(p.getUuid());
-        String arg = StringArgumentType.getString(c, "palavra");
+        String arg = StringArgumentType.getString(c, "palavra").trim();
         int n;
         if (arg.equals("tudo")) { n = pd.learned.size(); pd.learned.clear(); }
         else {

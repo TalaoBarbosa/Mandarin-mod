@@ -22,6 +22,11 @@ public final class Mic {
     public volatile boolean speechStarted, speechEnded;
     public volatile float level;          // 0..1 para a barrinha na tela
     public volatile String error;
+    /**
+     * a gravação só trouxe zeros (nem o chiado normal de um microfone): o sistema está bloqueando o mic
+     * (Windows: Privacidade → Microfone; macOS: permissão do Minecraft/Java). Não é o jogador que ficou quieto.
+     */
+    public volatile boolean mute;
     /** quanto silêncio depois de falar conta como "terminou" (na calibração é maior: a frase tem vírgula) */
     public volatile int endSilenceMs = 700;
 
@@ -31,7 +36,8 @@ public final class Mic {
 
     public boolean start() {
         stopQuiet();
-        buf.reset(); speechStarted = false; speechEnded = false; level = 0; error = null; noise = -1; loudRun = 0;
+        synchronized (buf) { buf.reset(); }
+        speechStarted = false; speechEnded = false; level = 0; error = null; mute = false; noise = -1; loudRun = 0;
         for (float r : new float[]{16000f, 48000f, 44100f}) {
             try {
                 AudioFormat fmt = new AudioFormat(r, 16, 1, true, false);
@@ -42,7 +48,8 @@ public final class Mic {
                 line.start();
                 rate = r;
                 running = true;
-                thread = new Thread(this::loop, "mandarimcraft-mic");
+                final TargetDataLine l = line;   // a thread fica com a própria linha: stop() pode zerar o campo antes dela terminar
+                thread = new Thread(() -> loop(l), "mandarimcraft-mic");
                 thread.setDaemon(true);
                 thread.start();
                 return true;
@@ -56,12 +63,12 @@ public final class Mic {
         return false;
     }
 
-    private void loop() {
+    private void loop(TargetDataLine l) {
         int frame = (int) (rate * 0.02) * 2;  // 20 ms
         byte[] b = new byte[frame];
         long t0 = System.currentTimeMillis();
-        while (running) {
-            int n = line.read(b, 0, b.length);
+        while (running && l.isOpen()) {   // linha fechada: read() voltaria 0 na hora e o laço giraria à toa
+            int n = l.read(b, 0, b.length);
             if (n <= 0) continue;
             synchronized (buf) { buf.write(b, 0, n); }
             double e = 0; int cnt = n / 2;
@@ -88,9 +95,14 @@ public final class Mic {
         line = null;
         byte[] raw;
         synchronized (buf) { raw = buf.toByteArray(); }
-        int n = raw.length / 2;
+        int n = raw.length / 2, peak = 0;
         float[] x = new float[n];
-        for (int i = 0; i < n; i++) x[i] = (short) ((raw[2 * i] & 0xff) | (raw[2 * i + 1] << 8)) / 32768f;
+        for (int i = 0; i < n; i++) {
+            short s = (short) ((raw[2 * i] & 0xff) | (raw[2 * i + 1] << 8));
+            x[i] = s / 32768f;
+            peak = Math.max(peak, Math.abs(s));
+        }
+        mute = peak <= 2;
         return rate == 16000f ? x : resample(x, rate, 16000f);
     }
 

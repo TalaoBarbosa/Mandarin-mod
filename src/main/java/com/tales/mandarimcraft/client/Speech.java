@@ -33,9 +33,10 @@ public final class Speech {
         public String joined() { return text.replace(" ", ""); }
     }
 
-    private static Model model;
+    // escritos na thread do reconhecimento e lidos na do jogo
+    private static volatile Model model;
     private static String grammar;
-    private static String status = "carregando";
+    private static volatile String status = "carregando";
     private static Set<String> modelWords = null;
 
     public static String status() { return status; }
@@ -47,10 +48,12 @@ public final class Speech {
         try {
             Path dir = FabricLoader.getInstance().getConfigDir().resolve("mandarimcraft").resolve("model");
             Path ok = dir.resolve(".pronto");
-            if (!Files.exists(ok)) {
+            String stamp = modelStamp();
+            if (!Files.exists(ok) || (stamp != null && !Files.readString(ok).equals(stamp))) {   // primeira vez, ou o mod veio com outro modelo
                 status = "preparando o reconhecimento de voz (só na primeira vez)";
+                deleteTree(dir);
                 unzipModel(dir);
-                Files.writeString(ok, "ok");
+                Files.writeString(ok, stamp);
             }
             Path root = findModelRoot(dir);
             LibVosk.setLogLevel(LogLevel.WARNINGS);
@@ -62,6 +65,27 @@ public final class Speech {
         } catch (Throwable t) {
             status = "erro: " + t.getMessage();
             MandarimCraft.LOG.error("Vosk não carregou", t);
+        }
+    }
+
+    /**
+     * identifica o model.zip que veio no mod (a 1ª entrada é a pasta com nome e versão, ex.: vosk-model-small-cn-0.22/);
+     * null se o mod veio sem ele (aí usa o que já foi extraído, se tiver)
+     */
+    private static String modelStamp() throws Exception {
+        try (InputStream in = Speech.class.getResourceAsStream("/mandarimcraft/model.zip")) {
+            if (in == null) return null;
+            try (ZipInputStream z = new ZipInputStream(in)) {
+                ZipEntry e = z.getNextEntry();
+                return "ok " + (e == null ? "" : e.getName());
+            }
+        }
+    }
+
+    private static void deleteTree(Path dir) throws Exception {
+        if (!Files.exists(dir)) return;
+        try (Stream<Path> s = Files.walk(dir)) {
+            for (Path p : (Iterable<Path>) s.sorted(Comparator.reverseOrder())::iterator) Files.delete(p);
         }
     }
 

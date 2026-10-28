@@ -39,6 +39,8 @@ public final class Desafio {
     static int attempt;
     static long deadline, showUntil, retryAt, playAt;
     static String playKey;
+    /** muda a cada cancelamento: a análise que terminar depois disso é de um desafio que já acabou e é jogada fora */
+    static int round;
     // o que a tela mostra
     static String title = "", line1 = "", line2 = "", line3 = "";
     static int color = 0xFFFFFFFF;
@@ -62,7 +64,8 @@ public final class Desafio {
     public static void onCancel(Payloads.Cancel c) {
         if (cur != null && cur.word().equals(c.word())) {
             MIC.stopQuiet();
-            cur = null; word = null; state = St.IDLE;
+            round++;
+            cur = null; word = null; state = St.IDLE; calibrateThenChallenge = false; retryCalibrate = false;
         }
         if (pending != null && pending.word().equals(c.word())) pending = null;
     }
@@ -82,7 +85,12 @@ public final class Desafio {
         calibrate();
     }
 
-    public static void reset() { MIC.stopQuiet(); state = St.IDLE; cur = null; pending = null; word = null; }
+    public static void reset() {
+        MIC.stopQuiet();
+        round++;
+        state = St.IDLE; cur = null; pending = null; word = null; playKey = null;
+        practice = false; calibrateThenChallenge = false; retryCalibrate = false; calTries = 0;
+    }
 
     private static void begin() {
         if (!Speech.ready()) { state = St.WAIT_MODEL; return; }
@@ -127,7 +135,7 @@ public final class Desafio {
         title = what; line1 = detail;
         line2 = cur != null ? "Sem castigo: o mod pausou. Depois use /mandarim continuar." : ""; line3 = "";
         if (cur != null) sendAnswer(false, "__mic__");
-        cur = null; practice = false;
+        cur = null; practice = false; calibrateThenChallenge = false;
     }
 
     // ------------------------------------------------------------ a cada tick
@@ -163,14 +171,20 @@ public final class Desafio {
         final St was = state;
         final float[] audio = MIC.stop();
         final boolean spoke = MIC.speechStarted;
+        if (!spoke && MIC.mute) {   // só zeros: o sistema bloqueou o microfone, não é o jogador que ficou quieto
+            calTries = 0;
+            techFailed("O microfone só mandou silêncio", "Libere o microfone para o Minecraft no sistema.");
+            return;
+        }
         state = St.THINK;
         title = "Analisando…"; line3 = "";
+        final int r0 = round;
         if (was == St.CALIBRATE) {
             WORK.submit(() -> {
                 double[] f0 = spoke ? Pitch.clean(Pitch.yin(audio)) : new double[0];
                 int voiced = 0; for (double f : f0) if (f > 0) voiced++;
                 final double m = Pitch.median(f0); final int v = voiced;
-                MinecraftClient.getInstance().execute(() -> onCalibrated(m, v));
+                MinecraftClient.getInstance().execute(() -> { if (r0 == round) onCalibrated(m, v); });
             });
             return;
         }
@@ -179,7 +193,7 @@ public final class Desafio {
         final double ref = cfg().refHz, tol = cfg().tol();
         WORK.submit(() -> {
             Result r = analyze(audio, spoke, target, prac, ref, tol);
-            MinecraftClient.getInstance().execute(() -> onResult(r));
+            MinecraftClient.getInstance().execute(() -> { if (r0 == round) onResult(r); });
         });
     }
 
