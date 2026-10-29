@@ -17,6 +17,7 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 ## Como jogar
 
 - Em cada mundo, ative com **`/mandarim comecar`**. O que você já tinha no inventário também vira desafio, mas errar não tira esses itens; só os novos.
+- **Palavra nova vem com o pinyin.** Nas 3 primeiras vezes o desafio mostra 汉字 + pinyin com os tons; se errar mais 2 vezes a mesma palavra, mostra o pinyin sem as marcas de tom; depois disso, só o português (aí é traduzir de cabeça). A contagem é por mundo. Para fixar uma dica: `/hanyu dica`.
 - Na primeira fala o mod pede para você ler uma frase (`你好，我是巴西人。`) e aprende a altura da sua voz. Dá para refazer com `/hanyu calibrar`.
 - Errou (ou o mod não entendeu), você ganha mais uma chance na hora; se foi só o **tom**, ele toca a pronúncia antes (`/hanyu chances 0` para tirar).
 - Cada tentativa fica registrada no `logs/latest.log` (o que o mod ouviu, os tons e o volume do microfone), para descobrir o que deu errado.
@@ -27,7 +28,7 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 | `/mandarim comecar` · `pausar` · `continuar` | liga e desliga neste mundo |
 | `/mandarim palavras` | o que você já aprendeu |
 | `/mandarim faltam` | o que ainda falta |
-| `/mandarim esquecer <palavra\|tudo>` | volta a pedir a palavra |
+| `/mandarim esquecer <palavra\|tudo>` | a palavra volta a ser nova: é pedida de novo, com o pinyin |
 
 ### Comandos do seu jogo
 | comando | o que faz |
@@ -37,7 +38,7 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 | `/hanyu ouvir <palavra>` | toca a pronúncia (ex.: `/hanyu ouvir 钻石` ou `/hanyu ouvir diamante`) |
 | `/hanyu tons rigido\|normal\|leve` | quão exigente com os tons |
 | `/hanyu tempo <3-20>` | segundos para falar (padrão 7) |
-| `/hanyu dica nenhuma\|hanzi\|pinyin` | mostrar dica no desafio |
+| `/hanyu dica auto\|nenhuma\|hanzi\|pinyin` | dica no desafio (padrão `auto`: veja acima) |
 | `/hanyu calibrar` | refaz a medida da sua voz |
 | `/hanyu chances <0-2>` | quantas tentativas extras quando erra (padrão 1) |
 

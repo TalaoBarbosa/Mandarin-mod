@@ -46,7 +46,7 @@ public class MandarimClient implements ClientModInitializer {
                             ClientConfig k = ClientConfig.get();
                             c.getSource().sendFeedback(Text.literal("汉语: tons " + k.tones + " · tempo " + k.seconds + " s · dica " + k.hint + " · chances extras: " + k.retries +
                                     " · voz " + (k.refHz > 0 ? Math.round(k.refHz) + " Hz" : "não calibrada") + " · reconhecimento: " + Speech.status() +
-                                    "\n/hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <s> · dica nenhuma|hanzi|pinyin · chances <0-2>").formatted(Formatting.GRAY));
+                                    "\n/hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <s> · dica auto|nenhuma|hanzi|pinyin · chances <0-2>").formatted(Formatting.GRAY));
                             return 1;
                         })
                         .then(literal("calibrar").executes(c -> busy(c, Desafio.startCalibration())))
@@ -79,12 +79,12 @@ public class MandarimClient implements ClientModInitializer {
                             c.getSource().sendFeedback(Text.literal("Chances extras quando erra: " + ClientConfig.get().retries)); return 1;
                         })))
                         .then(literal("dica").then(argument("tipo", StringArgumentType.word())
-                                .suggests((c, b) -> { b.suggest("nenhuma"); b.suggest("hanzi"); b.suggest("pinyin"); return b.buildFuture(); })
+                                .suggests((c, b) -> { b.suggest("auto"); b.suggest("nenhuma"); b.suggest("hanzi"); b.suggest("pinyin"); return b.buildFuture(); })
                                 .executes(c -> {
                                     String v = StringArgumentType.getString(c, "tipo");
-                                    if (!v.equals("nenhuma") && !v.equals("hanzi") && !v.equals("pinyin")) { c.getSource().sendError(Text.literal("Use nenhuma, hanzi ou pinyin.")); return 0; }
+                                    if (!v.equals("auto") && !v.equals("nenhuma") && !v.equals("hanzi") && !v.equals("pinyin")) { c.getSource().sendError(Text.literal("Use auto, nenhuma, hanzi ou pinyin.")); return 0; }
                                     ClientConfig.get().hint = v; ClientConfig.get().save();
-                                    c.getSource().sendFeedback(Text.literal("Dica no desafio: " + v)); return 1;
+                                    c.getSource().sendFeedback(Text.literal("Dica no desafio: " + v + (v.equals("auto") ? " (pinyin nas palavras novas; some conforme você erra a mesma palavra)" : ""))); return 1;
                                 })))));
     }
 

@@ -17,9 +17,12 @@ public final class ClientConfig {
     public int seconds = 7;            // tempo para falar
     public String tones = "rigido";    // rigido | normal | leve
     public int retries = 1;            // quando erra: mais quantas tentativas na mesma vez
-    public String hint = "nenhuma";    // nenhuma | hanzi | pinyin
+    public String hint = "auto";       // auto (pinyin nas palavras novas, vai sumindo) | nenhuma | hanzi | pinyin
     public double refHz = 0;           // altura média da voz (calibrar); 0 = ainda não calibrou
     public int samples = 0;            // quantas falas já entraram na média
+    public int version = 0;            // formato do arquivo (ver sane())
+
+    private static final int VERSION = 2;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static ClientConfig INSTANCE;
@@ -32,24 +35,31 @@ public final class ClientConfig {
     private static Path file() { return FabricLoader.getInstance().getConfigDir().resolve("mandarimcraft.json"); }
 
     private static ClientConfig load() {
+        ClientConfig c = null;
         try {
             Path f = file();
             if (Files.exists(f)) try (Reader r = Files.newBufferedReader(f, StandardCharsets.UTF_8)) {
-                ClientConfig c = GSON.fromJson(r, ClientConfig.class);
-                if (c != null) return c.sane();
+                c = GSON.fromJson(r, ClientConfig.class);
             }
         } catch (Exception e) { MandarimCraft.LOG.warn("Config inválida, usando o padrão", e); }
-        return new ClientConfig();
+        if (c == null) c = new ClientConfig();
+        int was = c.version;
+        c.sane();
+        if (was != c.version) c.save();
+        return c;
     }
 
     /** o arquivo pode ter sido editado à mão: volta para o padrão o que estiver fora do que os comandos aceitam */
-    private ClientConfig sane() {
+    private void sane() {
+        if (version < 2) {   // até a versão 1 "nenhuma" era o padrão de todo mundo, não uma escolha: passa para a dica automática
+            if ("nenhuma".equals(hint)) hint = "auto";
+            version = VERSION;
+        }
         if (seconds < 3 || seconds > 20) seconds = 7;
         if (retries < 0 || retries > 2) retries = 1;
         if (tones == null || !List.of("rigido", "normal", "leve").contains(tones)) tones = "rigido";
-        if (hint == null || !List.of("nenhuma", "hanzi", "pinyin").contains(hint)) hint = "nenhuma";
+        if (hint == null || !List.of("auto", "nenhuma", "hanzi", "pinyin").contains(hint)) hint = "auto";
         if (!(refHz >= 60 && refHz <= 450)) { refHz = 0; samples = 0; }
-        return this;
     }
 
     public void save() {

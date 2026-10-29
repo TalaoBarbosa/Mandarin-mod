@@ -123,7 +123,7 @@ public class MandarimCraft implements ModInitializer {
             if (w == null || pd.learned.containsKey(w.key)) continue;
             String item = Registries.ITEM.getId(s.getItem()).toString();
             ACTIVE.put(p.getUuid(), new Active(w.key, item, System.currentTimeMillis()));
-            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS));
+            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, pd.fails.getOrDefault(w.key, 0)));
             return;
         }
     }
@@ -198,7 +198,7 @@ public class MandarimCraft implements ModInitializer {
     private static int cmdHelp(CommandContext<ServerCommandSource> c) {
         c.getSource().sendFeedback(() -> Text.literal(
                 "Mandarim Craft: /mandarim comecar · pausar · continuar · palavras (o que já aprendeu) · faltam (o que falta) · esquecer <palavra|tudo>\n" +
-                "No seu jogo: /hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <segundos> · dica nenhuma|hanzi|pinyin · chances <0-2>"), false);
+                "No seu jogo: /hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <segundos> · dica auto|nenhuma|hanzi|pinyin · chances <0-2>"), false);
         return 1;
     }
 
@@ -245,27 +245,35 @@ public class MandarimCraft implements ModInitializer {
         return 1;
     }
 
-    /** sugere as palavras que o jogador já aprendeu (em 汉字) e "tudo" */
+    /** sugere as palavras que o jogador já aprendeu ou já errou (em 汉字) e "tudo" */
     private static CompletableFuture<Suggestions> suggestLearned(CommandContext<ServerCommandSource> c, SuggestionsBuilder b) {
-        List<String> opts = new ArrayList<>();
+        Set<String> opts = new LinkedHashSet<>();
         ServerPlayerEntity p = c.getSource().getPlayer();
-        if (p != null && data != null) for (String k : data.get(p.getUuid()).learned.keySet()) {
-            Vocab.Word w = Vocab.get(k);
-            if (w != null) opts.add(w.zh);
+        if (p != null && data != null) {
+            WorldData.PlayerData pd = data.get(p.getUuid());
+            for (String k : pd.learned.keySet()) { Vocab.Word w = Vocab.get(k); if (w != null) opts.add(w.zh); }
+            for (String k : pd.fails.keySet()) { Vocab.Word w = Vocab.get(k); if (w != null) opts.add(w.zh); }
         }
         opts.add("tudo");
         return CommandSource.suggestMatching(opts, b);
     }
 
+    /** a palavra volta a ser nova: pedida de novo e, com a dica automática, com o pinyin de novo (zera os erros também) */
     private static int cmdForget(CommandContext<ServerCommandSource> c) throws CommandSyntaxException {
         ServerPlayerEntity p = c.getSource().getPlayerOrThrow();
         WorldData.PlayerData pd = data.get(p.getUuid());
         String arg = StringArgumentType.getString(c, "palavra").trim();
         int n;
-        if (arg.equals("tudo")) { n = pd.learned.size(); pd.learned.clear(); }
-        else {
+        if (arg.equals("tudo")) {
+            Set<String> all = new HashSet<>(pd.learned.keySet()); all.addAll(pd.fails.keySet());
+            n = all.size(); pd.learned.clear(); pd.fails.clear();
+        } else {
             n = 0;
-            for (Vocab.Word w : Vocab.all()) if (w.key.equals(arg) || w.zh.equals(arg)) { if (pd.learned.remove(w.key) != null) n++; }
+            for (Vocab.Word w : Vocab.all()) if (w.key.equals(arg) || w.zh.equals(arg)) {
+                boolean had = pd.learned.remove(w.key) != null;
+                if (pd.fails.remove(w.key) != null) had = true;
+                if (had) n++;
+            }
         }
         data.save();
         final int fn = n;

@@ -122,10 +122,27 @@ public final class Desafio {
         else {
             title = attempt > 1 ? retryTitle : "Diga em chinês:";
             line1 = word.pt;
-            line2 = switch (cfg().hint) { case "hanzi" -> word.zh; case "pinyin" -> word.zh + "  " + word.pretty(); default -> ""; };
-            line3 = "";
+            String hint = hintFor(cur.seen());
+            line2 = switch (hint) {
+                case "hanzi" -> word.zh;
+                case "pinyin" -> word.zh + "  " + word.pretty();
+                case "sem-tom" -> word.zh + "  " + Pinyin.noTones(word.py);
+                default -> "";
+            };
+            line3 = !cfg().hint.equals("auto") ? "" : cur.seen() == 0 ? "Palavra nova: leia o pinyin em voz alta." : hint.equals("sem-tom") ? "Agora sem as marcas: lembre dos tons." : "";
         }
         color = 0xFFFFFFFF;
+    }
+
+    /**
+     * Dica automática conforme quantas vezes já errou a palavra neste mundo: nas 3 primeiras com o pinyin inteiro
+     * (pegar um bloco pela primeira vez na vida e perder por não saber a palavra pune demais), nas 2 seguintes sem as
+     * marcas de tom, depois só o português. Os outros ajustes do /hanyu dica valem sempre.
+     */
+    static String hintFor(int seen) {
+        String h = cfg().hint;
+        if (!h.equals("auto")) return h;
+        return seen < 3 ? "pinyin" : seen < 5 ? "sem-tom" : "nenhuma";
     }
 
     private static void micFailed() {
