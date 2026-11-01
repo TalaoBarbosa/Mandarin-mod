@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
@@ -41,10 +42,15 @@ public final class Desafio {
     static String playKey, retryTitle = "";
     /** muda a cada cancelamento: a análise que terminar depois disso é de um desafio que já acabou e é jogada fora */
     static int round;
-    // o que a tela mostra
-    static String title = "", line1 = "", line2 = "", line3 = "";
-    static int color = 0xFFFFFFFF;
-    static boolean good;
+    // o que o quadro mostra (Hud): cabeçalho na cor do momento, nome em português, 汉字 grande + pinyin, duas linhas menores
+    static String title = "", line1 = "", zh = "", py = "", line2 = "", line3 = "";
+    static int color = Hud.GRAY;
+
+    /** troca tudo o que o quadro mostra de uma vez. Cor: Hud.GRAY neutro, GREEN acertou, YELLOW quase, RED errou */
+    static void screen(int color, String title, String line1, String zh, String py, String line2, String line3) {
+        Desafio.color = color; Desafio.title = title; Desafio.line1 = line1;
+        Desafio.zh = zh; Desafio.py = py; Desafio.line2 = line2; Desafio.line3 = line3;
+    }
 
     public static final String CAL_ZH = "你好，我是巴西人。", CAL_PY = "nǐ hǎo, wǒ shì Bāxī rén";
 
@@ -74,7 +80,7 @@ public final class Desafio {
     /** /hanyu teste: diga o nome de qualquer item, sem perder nada. false = está no meio de outro desafio */
     public static boolean startPractice() {
         if (state != St.IDLE && state != St.SHOW) return false;
-        cur = null; word = null; icon = ItemStack.EMPTY; practice = true; attempt = 1;
+        cur = null; word = null; icon = new ItemStack(Items.WRITABLE_BOOK); practice = true; attempt = 1;
         begin();
         return true;
     }
@@ -82,7 +88,7 @@ public final class Desafio {
     /** /hanyu calibrar. false = está no meio de outro desafio */
     public static boolean startCalibration() {
         if (state != St.IDLE && state != St.SHOW) return false;
-        cur = null; word = null; icon = ItemStack.EMPTY; practice = false; calibrateThenChallenge = false;
+        cur = null; word = null; icon = new ItemStack(Items.NOTE_BLOCK); practice = false; calibrateThenChallenge = false;
         if (!Speech.ready()) { state = St.WAIT_MODEL; return true; }
         calibrate();
         return true;
@@ -108,9 +114,7 @@ public final class Desafio {
         if (!MIC.start()) { micFailed(); return; }
         state = St.CALIBRATE;
         deadline = System.currentTimeMillis() + 9000;
-        title = "Primeiro, deixe o mod conhecer a sua voz";
-        line1 = "Leia em voz normal:";
-        line2 = CAL_ZH; line3 = CAL_PY; color = 0xFFFFFFFF;
+        screen(Hud.GRAY, "Primeiro, deixe o mod conhecer a sua voz", "Leia em voz normal:", CAL_ZH, CAL_PY, "", "");
     }
 
     private static void listen() {
@@ -118,20 +122,13 @@ public final class Desafio {
         if (!MIC.start()) { micFailed(); return; }
         state = St.LISTEN;
         deadline = System.currentTimeMillis() + cfg().seconds * 1000L;
-        if (practice) { title = "Treino: diga o nome de um item"; line1 = "Nada se perde aqui."; line2 = ""; line3 = ""; }
-        else {
-            title = attempt > 1 ? retryTitle : "Diga em chinês:";
-            line1 = word.pt;
-            String hint = hintFor(cur.seen());
-            line2 = switch (hint) {
-                case "hanzi" -> word.zh;
-                case "pinyin" -> word.zh + "  " + word.pretty();
-                case "sem-tom" -> word.zh + "  " + Pinyin.noTones(word.py);
-                default -> "";
-            };
-            line3 = !cfg().hint.equals("auto") ? "" : cur.seen() == 0 ? "Palavra nova: leia o pinyin em voz alta." : hint.equals("sem-tom") ? "Agora sem as marcas: lembre dos tons." : "";
-        }
-        color = 0xFFFFFFFF;
+        if (practice) { screen(Hud.GRAY, "Treino: diga o nome de um item", "Nada se perde aqui.", "", "", "", ""); return; }
+        String hint = hintFor(cur.seen());
+        String note = !cfg().hint.equals("auto") ? "" : cur.seen() == 0 ? "Palavra nova: leia o pinyin em voz alta." : hint.equals("sem-tom") ? "Agora sem as marcas: lembre dos tons." : "";
+        screen(Hud.GRAY, attempt > 1 ? retryTitle : "Diga em chinês:", word.pt,
+                hint.equals("nenhuma") ? "" : word.zh,
+                switch (hint) { case "pinyin" -> word.pretty(); case "sem-tom" -> Pinyin.noTones(word.py); default -> ""; },
+                note, "");
     }
 
     /**
@@ -151,9 +148,8 @@ public final class Desafio {
 
     /** problema técnico (microfone, modelo de voz): nunca tira item; o servidor pausa o desafio */
     private static void techFailed(String what, String detail) {
-        state = St.SHOW; showUntil = System.currentTimeMillis() + 7000; good = false; color = 0xFFFF5555;
-        title = what; line1 = detail;
-        line2 = cur != null ? "Sem castigo: o mod pausou. Depois use /mandarim continuar." : ""; line3 = "";
+        state = St.SHOW; showUntil = System.currentTimeMillis() + 7000; icon = new ItemStack(Items.BARRIER);
+        screen(Hud.RED, what, detail, "", "", cur != null ? "Sem castigo: o mod pausou. Depois use /mandarim continuar." : "", "");
         if (cur != null) sendAnswer(false, "__mic__");
         cur = null; practice = false; calibrateThenChallenge = false;
     }
@@ -165,7 +161,7 @@ public final class Desafio {
         if (playKey != null && now >= playAt) { playWord(playKey); playKey = null; }
         switch (state) {
             case WAIT_MODEL -> {
-                title = "Preparando o reconhecimento de voz…"; line1 = Speech.status(); line2 = ""; line3 = "";
+                screen(Hud.GRAY, "Preparando o reconhecimento de voz…", Speech.status(), "", "", "", "");
                 if (Speech.status().startsWith("erro")) { techFailed("O reconhecimento de voz não carregou", Speech.status()); return; }
                 if (Speech.ready()) {
                     if (cur != null || practice) begin(); else calibrate();
@@ -194,7 +190,7 @@ public final class Desafio {
             return;
         }
         state = St.THINK;
-        title = "Analisando…"; line3 = "";
+        title = "Analisando"; line2 = ""; line3 = "";   // o Hud anima as reticências
         final int r0 = round;
         final String mic = micInfo(audio, spoke);
         if (was == St.CALIBRATE) {
@@ -234,8 +230,7 @@ public final class Desafio {
     private static void onCalibrated(double med, int voiced) {
         if (med <= 0 || voiced < 40) {   // não ouviu o bastante: tenta de novo sozinho (até 3 vezes)
             if (++calTries >= 3) { calTries = 0; techFailed("Não consegui ouvir a sua voz", "Confira o microfone e tente /hanyu calibrar de novo."); return; }
-            color = 0xFFFFFF55; good = false;
-            title = "Não deu para ouvir direito"; line1 = "Fale um pouco mais alto e perto do microfone."; line2 = ""; line3 = "";
+            screen(Hud.YELLOW, "Não deu para ouvir direito", "Fale um pouco mais alto e perto do microfone.", "", "", "", "");
             state = St.RETRY_WAIT; retryCalibrate = true; retryAt = System.currentTimeMillis() + 2500;
             return;
         }
@@ -243,12 +238,12 @@ public final class Desafio {
         cfg().refHz = 0; cfg().samples = 0; cfg().addVoice(med);
         if (calibrateThenChallenge && (cur != null || practice)) {
             calibrateThenChallenge = false;
-            title = "Voz calibrada (" + Math.round(med) + " Hz). Agora o item!"; line1 = ""; line2 = ""; line3 = ""; color = 0xFF55FF55;
+            screen(Hud.GREEN, "✓ Voz calibrada (" + Math.round(med) + " Hz)", "Agora o item!", "", "", "", "");
             state = St.RETRY_WAIT; retryCalibrate = false; retryAt = System.currentTimeMillis() + 1200;
             return;
         }
-        state = St.SHOW; showUntil = System.currentTimeMillis() + 3000; color = 0xFF55FF55; good = true;
-        title = "Voz calibrada ✓"; line1 = "Altura média: " + Math.round(med) + " Hz"; line2 = ""; line3 = "";
+        state = St.SHOW; showUntil = System.currentTimeMillis() + 3000;
+        screen(Hud.GREEN, "✓ Voz calibrada", "Altura média: " + Math.round(med) + " Hz", "", "", "", "");
     }
 
     static boolean retryCalibrate = false;
@@ -326,45 +321,43 @@ public final class Desafio {
         String tons = r.tones() != null ? r.tones().summary() : "";
         if (practice) {
             state = St.SHOW; showUntil = now + 5000;
-            if (r.heardWord() == null) { good = false; color = 0xFFFFFF55; title = r.spoke() ? "Não reconheci nenhum item" : "Não ouvi nada"; line1 = r.heard().isEmpty() ? "" : "Ouvi: " + r.heard(); line2 = ""; line3 = ""; return; }
+            if (r.heardWord() == null) { screen(Hud.YELLOW, r.spoke() ? "Não reconheci nenhum item" : "Não ouvi nada", r.heard().isEmpty() ? "" : "Ouvi: " + r.heard(), "", "", "", ""); return; }
             Vocab.Word w = r.heardWord();
-            good = r.pass(); color = r.pass() ? 0xFF55FF55 : 0xFFFF5555;
-            title = (r.pass() ? "✓ " : "✗ tom: ") + w.zh + " " + w.pretty();
-            line1 = w.pt; line2 = tons; line3 = "";
+            ItemStack it = w.icon();   // no treino o quadro mostra o item da palavra que você disse
+            if (!it.isEmpty()) icon = it;
+            screen(r.pass() ? Hud.GREEN : Hud.RED, r.pass() ? "✓ Isso!" : "✗ O tom não saiu certo", w.pt, w.zh, w.pretty(), tons, "");
             if (!r.pass()) { playKey = w.key; playAt = now + 700; }
             return;
         }
         if (cur == null || word == null) { state = St.IDLE; return; }
         if (r.pass()) {
             sendAnswer(true, r.heard());
-            good = true; color = 0xFF55FF55; state = St.SHOW; showUntil = now + 3000;
-            title = "✓ " + word.zh + " " + word.pretty(); line1 = word.pt; line2 = tons; line3 = "";
+            state = St.SHOW; showUntil = now + 3000;
+            screen(Hud.GREEN, "✓ Acertou!", word.pt, word.zh, word.pretty(), tons, "");
             MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.ENTITY_PLAYER_LEVELUP, 1.6f, 0.6f));
             cur = null;
             return;
         }
         if (attempt <= cfg().retries) {   // outra chance em qualquer erro: o reconhecedor também se engana, até com nativos
             attempt++;
-            good = false; color = 0xFFFFFF55; state = St.RETRY_WAIT; retryCalibrate = false;
-            if (r.syllablesOk()) {
-                title = "Quase! As sílabas estão certas, o tom não:"; line1 = tons;
+            state = St.RETRY_WAIT; retryCalibrate = false;
+            if (r.syllablesOk()) {   // já disse a palavra certa: mostra como ela é e toca a pronúncia
+                screen(Hud.YELLOW, "Quase! As sílabas estão certas, o tom não:", word.pt, word.zh, word.pretty(), tons, "");
                 retryTitle = "Mais uma vez, cuidado com o tom:";
                 playKey = word.key; playAt = now + 300; retryAt = now + 2600;
             } else {   // sem tocar a pronúncia: aqui ainda vale lembrar da palavra
-                title = !r.spoke() ? "Não ouvi nada." : r.heard().isEmpty() ? "Não entendi." : "Ouvi: " + r.heard();
-                line1 = r.spoke() && !r.heard().isEmpty() ? "Tente de novo." : "Fale de novo, mais perto do microfone.";
+                screen(Hud.YELLOW, !r.spoke() ? "Não ouvi nada" : r.heard().isEmpty() ? "Não entendi" : "Ouvi: " + r.heard(),
+                        r.spoke() && !r.heard().isEmpty() ? "Tente de novo." : "Fale de novo, mais perto do microfone.", "", "", "", "");
                 retryTitle = "Mais uma vez:";
                 retryAt = now + 1800;
             }
-            line2 = ""; line3 = "";
             return;
         }
         sendAnswer(false, r.heard());
-        good = false; color = 0xFFFF5555; state = St.SHOW; showUntil = now + 6500;
-        title = "✗ Era " + word.zh + " " + word.pretty();
-        line1 = word.pt;
-        line2 = !r.spoke() ? "Não ouvi nada a tempo." : r.syllablesOk() ? "Tons: " + tons : (r.heard().isEmpty() ? "Não entendi." : "Ouvi: " + r.heard());
-        line3 = "Ouça e tente quando pegar de novo.";
+        state = St.SHOW; showUntil = now + 6500;
+        screen(Hud.RED, "✗ Não foi dessa vez", word.pt, word.zh, word.pretty(),
+                !r.spoke() ? "Não ouvi nada a tempo." : r.syllablesOk() ? "Tons: " + tons : (r.heard().isEmpty() ? "Não entendi." : "Ouvi: " + r.heard()),
+                "Ouça e tente quando pegar de novo.");
         MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.ENTITY_VILLAGER_NO, 1.0f, 0.7f));
         playKey = word.key; playAt = now + 900;
         cur = null;
