@@ -27,25 +27,40 @@ public final class Hud {
         }
     }
 
-    private static long openedAt, lastFrame;
+    private static long openedAt;
+    private static boolean hidden = true;
 
-    /** por cima de uma tela aberta (inventário, baú…): à frente dos itens dos slots, como uma dica de item */
+    /**
+     * Por cima de uma tela aberta (inventário, baú…), à frente dos itens dos slots como uma dica de item. Aqui vai a
+     * versão compacta, numa faixa: o quadro inteiro cobriria a parte de cima do inventário (e a 1ª fileira de um baú).
+     */
     public static void renderOnTop(DrawContext ctx) {
-        if (Desafio.state == Desafio.St.IDLE) return;
+        if (!visible()) return;
         ctx.getMatrices().push();
         ctx.getMatrices().translate(0, 0, 400);
-        render(ctx);
+        compact(ctx);
         ctx.getMatrices().pop();
     }
 
+    /** marca quando o quadro aparece (pela mudança de estado: contar o tempo entre quadros falhava com o jogo travando) */
+    private static boolean visible() {
+        if (Desafio.state == Desafio.St.IDLE || MinecraftClient.getInstance().options.hudHidden) { hidden = true; return false; }
+        if (hidden) { hidden = false; openedAt = System.currentTimeMillis(); }
+        return true;
+    }
+
+    /** 0 = escondido acima da tela, 1 = no lugar: desliza ao aparecer e no fim do resultado (se não vem outro desafio logo atrás) */
+    private static float slide(long now) {
+        float k = ease((now - openedAt) / 180f);
+        if (Desafio.state == Desafio.St.SHOW && Desafio.pending == null) k = Math.min(k, ease((Desafio.showUntil - now) / 180f));
+        return k;
+    }
+
     public static void render(DrawContext ctx) {
+        if (!visible()) return;
         Desafio.St st = Desafio.state;
-        if (st == Desafio.St.IDLE) return;
         MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.options.hudHidden) return;
         long now = System.currentTimeMillis();
-        if (now - lastFrame > 250) openedAt = now;   // estava escondido: entra deslizando
-        lastFrame = now;
 
         TextRenderer tr = mc.textRenderer;
         boolean listening = st == Desafio.St.LISTEN || st == Desafio.St.CALIBRATE;
@@ -66,10 +81,7 @@ public final class Hud {
         int h = PAD + Math.max(textH, hasIcon ? ICON : 0) + PAD;
         int x = (sw - w) / 2;
 
-        // desliza para dentro ao aparecer e para fora no fim do resultado (se não vem outro desafio logo atrás)
-        float k = ease((now - openedAt) / 180f);
-        if (st == Desafio.St.SHOW && Desafio.pending == null) k = Math.min(k, ease((Desafio.showUntil - now) / 180f));
-        int y = 6 - Math.round((1 - k) * (h + 8));
+        int y = 6 - Math.round((1 - slide(now)) * (h + 8));
 
         panel(ctx, x, y, w, h, Desafio.color);
 
@@ -99,24 +111,62 @@ public final class Hud {
         if (!l3.isEmpty()) { ctx.drawTextWithShadow(tr, l3, tx, ty, DARK); ty += 11; }
 
         if (listening) {
-            long left = Math.max(0, Desafio.deadline - now);
-            long total = st == Desafio.St.CALIBRATE ? 9000 : Math.max(1, ClientConfig.get().seconds * 1000L);
             boolean hearing = Desafio.MIC.speechStarted;
             ctx.drawTextWithShadow(tr, hearing ? "♪ Ouvindo…" : "Fale agora", tx, ty, hearing ? GREEN : WHITE);
-            String secs = (left + 999) / 1000 + " s";
+            String secs = secondsLeft(now);
             ctx.drawTextWithShadow(tr, secs, tx + BAR - tr.getWidth(secs), ty, GRAY);
-            ty += 11;
-            // tempo: barra de chefe azul → amarela → vermelha (rosa na calibração)
-            float frac = Math.min(1f, (float) left / total);
-            int c = st == Desafio.St.CALIBRATE ? 3 : frac > 0.4f ? 0 : frac > 0.2f ? 1 : 2;
-            ctx.drawGuiTexture(BAR_BG[c], BAR, 5, 0, 0, tx, ty, BAR, 5);
-            int fill = Math.round(BAR * frac);
-            if (fill > 0) ctx.drawGuiTexture(BAR_FG[c], BAR, 5, 0, 0, tx, ty, fill, 5);
-            ty += 7;
-            // volume do microfone: linha fina embaixo (verde quando já está ouvindo a fala)
-            ctx.fill(tx, ty, tx + BAR, ty + 2, 0x40FFFFFF);
-            ctx.fill(tx, ty, tx + Math.round(BAR * Desafio.MIC.level), ty + 2, hearing ? GREEN : GRAY);
+            bars(ctx, tx, ty + 11, BAR, now);
         }
+    }
+
+    /** a faixa por cima das telas: item, nome, 汉字 + pinyin e o tempo, numa linha só */
+    private static void compact(DrawContext ctx) {
+        Desafio.St st = Desafio.state;
+        MinecraftClient mc = MinecraftClient.getInstance();
+        TextRenderer tr = mc.textRenderer;
+        long now = System.currentTimeMillis();
+        boolean listening = st == Desafio.St.LISTEN || st == Desafio.St.CALIBRATE;
+        // no resultado o nome vem na cor dele (verde, amarelo, vermelho); "Analisando…" substitui o tempo
+        String name = Desafio.line1.isEmpty() ? Desafio.title : Desafio.line1;
+        String right = listening ? secondsLeft(now) : st == Desafio.St.THINK ? "…" : "";
+        int nameW = tr.getWidth(name), zhW = tr.getWidth(Desafio.zh), pyW = tr.getWidth(Desafio.py), rightW = tr.getWidth(right);
+        int rowW = nameW + (zhW > 0 ? 8 + zhW : 0) + (pyW > 0 ? 4 + pyW : 0) + (rightW > 0 ? 10 + rightW : 0);
+        int barW = listening ? Math.max(120, rowW) : 0;
+        boolean hasIcon = !Desafio.icon.isEmpty();
+        int sw = ctx.getScaledWindowWidth();
+        int w = Math.min(sw - 8, 5 + (hasIcon ? 20 : 0) + Math.max(rowW, barW) + 5);
+        int h = listening ? 33 : 22;
+        int x = (sw - w) / 2, y = 2 - Math.round((1 - slide(now)) * (h + 4));
+
+        panel(ctx, x, y, w, h, Desafio.color);
+        int tx = x + 5;
+        if (hasIcon) { ctx.drawItem(Desafio.icon, tx, y + 3); tx += 20; }
+        int ty = y + 7;
+        ctx.drawTextWithShadow(tr, name, tx, ty, Desafio.color == GRAY ? WHITE : Desafio.color);
+        int cx = tx + nameW;
+        if (zhW > 0) { ctx.drawTextWithShadow(tr, Desafio.zh, cx + 8, ty, WHITE); cx += 8 + zhW; }
+        if (pyW > 0) ctx.drawTextWithShadow(tr, Desafio.py, cx + 4, ty, GOLD);
+        if (rightW > 0) ctx.drawTextWithShadow(tr, right, x + w - 5 - rightW, ty, GRAY);
+        if (listening) bars(ctx, tx, y + 21, Math.min(barW, x + w - 5 - tx), now);
+    }
+
+    private static String secondsLeft(long now) {
+        return (Math.max(0, Desafio.deadline - now) + 999) / 1000 + " s";
+    }
+
+    /** tempo numa barra de chefe azul → amarela → vermelha (rosa na calibração); volume do microfone numa linha fina embaixo */
+    private static void bars(DrawContext ctx, int x, int y, int width, long now) {
+        boolean cal = Desafio.state == Desafio.St.CALIBRATE;
+        long total = cal ? 9000 : Math.max(1, ClientConfig.get().seconds * 1000L);
+        float frac = Math.min(1f, (float) Math.max(0, Desafio.deadline - now) / total);
+        int c = cal ? 3 : frac > 0.4f ? 0 : frac > 0.2f ? 1 : 2;
+        int bw = Math.min(BAR, width);   // a textura tem 182 de largura: mais curta, corta a ponta direita
+        ctx.drawGuiTexture(BAR_BG[c], BAR, 5, 0, 0, x, y, bw, 5);
+        int fill = Math.round(bw * frac);
+        if (fill > 0) ctx.drawGuiTexture(BAR_FG[c], BAR, 5, 0, 0, x, y, fill, 5);
+        boolean hearing = Desafio.MIC.speechStarted;
+        ctx.fill(x, y + 7, x + bw, y + 9, 0x40FFFFFF);
+        ctx.fill(x, y + 7, x + Math.round(bw * Desafio.MIC.level), y + 9, hearing ? GREEN : GRAY);
     }
 
     /** fundo e borda como os das dicas de item; a borda pega a cor do momento (roxa = a das dicas, neutra) */
