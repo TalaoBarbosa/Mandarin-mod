@@ -90,6 +90,7 @@ public final class Hud {
             ctx.getMatrices().translate(x + PAD, y + (h - ICON) / 2f, 0);
             ctx.getMatrices().scale(2f, 2f, 1f);
             ctx.drawItem(Desafio.icon, 0, 0);
+            ctx.drawItemInSlot(tr, Desafio.icon, 0, 0);   // o número da pilha, no "quantos você tem?" (com 1 não desenha nada)
             ctx.getMatrices().pop();
         }
 
@@ -140,7 +141,7 @@ public final class Hud {
 
         panel(ctx, x, y, w, h, Desafio.color);
         int tx = x + 5;
-        if (hasIcon) { ctx.drawItem(Desafio.icon, tx, y + 3); tx += 20; }
+        if (hasIcon) { ctx.drawItem(Desafio.icon, tx, y + 3); ctx.drawItemInSlot(tr, Desafio.icon, tx, y + 3); tx += 20; }
         int ty = y + 7;
         ctx.drawTextWithShadow(tr, name, tx, ty, Desafio.color == GRAY ? WHITE : Desafio.color);
         int cx = tx + nameW;

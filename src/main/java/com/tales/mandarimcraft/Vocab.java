@@ -29,6 +29,8 @@ public final class Vocab {
     public static final class Word {
         public final String key, zh, py, pt;
         public final List<Alt> alts;
+        /** classificadores aceitos nas quantidades (六十四根木头); o 1º é o da dica */
+        public List<Alt> mw = List.of(new Alt("个", "ge4", "个"));
         final List<Identifier> ids = new ArrayList<>();
         final List<TagKey<Item>> tags = new ArrayList<>();
         Word(String key, String zh, String py, String pt, List<Alt> alts) { this.key = key; this.zh = zh; this.py = py; this.pt = pt; this.alts = alts; }
@@ -62,6 +64,11 @@ public final class Vocab {
                 }
                 Word w = new Word(o.get("key").getAsString(), o.get("zh").getAsString(), o.get("py").getAsString(), o.get("pt").getAsString(), alts);
                 if (o.has("rec")) w.rec = o.get("rec").getAsString();
+                if (o.has("mw")) {
+                    List<Alt> mw = new ArrayList<>();
+                    for (JsonElement m : o.getAsJsonArray("mw")) { JsonObject mo = m.getAsJsonObject(); mw.add(new Alt(mo.get("zh").getAsString(), mo.get("py").getAsString(), mo.get("zh").getAsString())); }
+                    if (!mw.isEmpty()) w.mw = mw;
+                }
                 JsonArray items = o.getAsJsonArray("items");
                 for (JsonElement it : items) {
                     String s = it.getAsString();

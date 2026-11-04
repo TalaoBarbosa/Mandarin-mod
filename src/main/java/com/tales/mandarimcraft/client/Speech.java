@@ -177,8 +177,38 @@ public final class Speech {
         return a.toString();
     }
 
-    /** reconhece um trecho de áudio 16 kHz (float). Devolve null se o modelo não está pronto. */
-    public static Heard recognize(float[] pcm) {
+    /** pedaços seguidos (palavras do reconhecedor) que juntos dão exatamente este texto: [início, fim) ou null */
+    public static int[] span(List<Piece> ps, String text) {
+        for (int i = 0; i < ps.size(); i++) {
+            StringBuilder b = new StringBuilder();
+            for (int j = i; j < ps.size() && b.length() < text.length(); j++) {
+                b.append(ps.get(j).text());
+                if (b.toString().equals(text)) return new int[]{i, j + 1};
+            }
+        }
+        return null;
+    }
+
+    /** início e fim de cada sílaba: pedaço de 1 caractere (os números) já é uma sílaba; o de mais (o nome) é dividido por igual. null se não bate */
+    public static double[][] perSyllable(List<Piece> ps, int n) {
+        int chars = 0;
+        for (Piece p : ps) chars += p.text().length();
+        if (chars != n) return null;
+        double[][] out = new double[n][2];
+        int k = 0;
+        for (Piece p : ps) {
+            int c = p.text().length();
+            double d = (p.end() - p.start()) / c;
+            for (int i = 0; i < c; i++, k++) { out[k][0] = p.start() + d * i; out[k][1] = p.start() + d * (i + 1); }
+        }
+        return out;
+    }
+
+    /** reconhece um trecho de áudio 16 kHz (float) entre as palavras do mod. Devolve null se o modelo não está pronto. */
+    public static Heard recognize(float[] pcm) { return recognize(pcm, grammar); }
+
+    /** idem, com outra gramática (lista JSON de frases), como a de uma pergunta de quantidade */
+    public static Heard recognize(float[] pcm, String grammar) {
         if (model == null) return null;
         byte[] b = new byte[pcm.length * 2];
         for (int i = 0; i < pcm.length; i++) {

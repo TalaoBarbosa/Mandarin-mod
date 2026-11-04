@@ -3,6 +3,7 @@ package com.tales.mandarimcraft.client;
 import com.tales.mandarimcraft.MandarimCraft;
 import com.tales.mandarimcraft.Vocab;
 import com.tales.mandarimcraft.core.Answer;
+import com.tales.mandarimcraft.core.Counting;
 import com.tales.mandarimcraft.core.Pinyin;
 import com.tales.mandarimcraft.core.Pitch;
 import com.tales.mandarimcraft.core.ToneCheck;
@@ -38,6 +39,10 @@ public final class Desafio {
     static ItemStack icon = ItemStack.EMPTY;
     static boolean practice, calibrateThenChallenge;
     static int attempt;
+    /** desafio de quantidade: quantos itens ele tem ("六十四根木头"); 0 = palavra nova */
+    static int count;
+    /** a dica de classificador (个 no lugar de 根, 二 no lugar de 两) já foi dada neste desafio: ela não gasta tentativa, mas só uma vez */
+    static boolean tipGiven;
     static long deadline, showUntil, retryAt, playAt;
     static String playKey, retryTitle = "";
     /** muda a cada cancelamento: a análise que terminar depois disso é de um desafio que já acabou e é jogada fora */
@@ -61,10 +66,11 @@ public final class Desafio {
     public static void onChallenge(Payloads.Challenge c) {
         // espera até a tela do resultado acabar: dá para ler o que o mod ouviu e escutar a pronúncia antes de falar de novo
         if (state != St.IDLE) { pending = c; return; }
-        cur = c; practice = false; attempt = 1;
+        cur = c; practice = false; attempt = 1; count = c.count(); tipGiven = false;
         word = Vocab.get(c.word());
         if (word == null) { cur = null; return; }
-        try { icon = new ItemStack(Registries.ITEM.get(Identifier.of(c.item()))); } catch (Exception e) { icon = ItemStack.EMPTY; }
+        // na quantidade o ícone leva o número da pilha, como no inventário
+        try { icon = new ItemStack(Registries.ITEM.get(Identifier.of(c.item())), Math.max(1, count)); } catch (Exception e) { icon = ItemStack.EMPTY; }
         begin();
     }
 
@@ -80,7 +86,7 @@ public final class Desafio {
     /** /hanyu teste: diga o nome de qualquer item, sem perder nada. false = está no meio de outro desafio */
     public static boolean startPractice() {
         if (state != St.IDLE && state != St.SHOW) return false;
-        cur = null; word = null; icon = new ItemStack(Items.WRITABLE_BOOK); practice = true; attempt = 1;
+        cur = null; word = null; icon = new ItemStack(Items.WRITABLE_BOOK); practice = true; attempt = 1; count = 0;
         begin();
         return true;
     }
@@ -97,7 +103,7 @@ public final class Desafio {
     public static void reset() {
         MIC.stopQuiet();
         round++;
-        state = St.IDLE; cur = null; pending = null; word = null; playKey = null;
+        state = St.IDLE; cur = null; pending = null; word = null; playKey = null; count = 0;
         practice = false; calibrateThenChallenge = false; retryCalibrate = false; calTries = 0;
     }
 
@@ -124,12 +130,27 @@ public final class Desafio {
         deadline = System.currentTimeMillis() + cfg().seconds * 1000L;
         if (practice) { screen(Hud.GRAY, "Treino: diga o nome de um item", "Nada se perde aqui.", "", "", "", ""); return; }
         String hint = hintFor(cur.seen());
+        if (count > 0) {   // a mesma dica que vai sumindo, só que da quantidade: frase inteira → só o classificador → nada
+            Vocab.Alt mw = word.mw.get(0);
+            boolean auto = cfg().hint.equals("auto");
+            screen(Hud.GRAY, attempt > 1 ? retryTitle : "Quantos você tem? Diga em chinês:", count + " × " + word.pt,
+                    switch (hint) { case "pinyin", "hanzi" -> countZh(); case "sem-tom" -> mw.zh(); default -> ""; },
+                    switch (hint) { case "pinyin" -> countPy(); case "sem-tom" -> Pinyin.noTones(mw.py()); default -> ""; },
+                    !auto ? "" : cur.seen() == 0 ? "Número + classificador (o nome é opcional)." : hint.equals("sem-tom") ? "Esse é o classificador; o número é com você." : "",
+                    "");
+            return;
+        }
         String note = !cfg().hint.equals("auto") ? "" : cur.seen() == 0 ? "Palavra nova: leia o pinyin em voz alta." : hint.equals("sem-tom") ? "Agora sem as marcas: lembre dos tons." : "";
         screen(Hud.GRAY, attempt > 1 ? retryTitle : "Diga em chinês:", word.pt,
                 hint.equals("nenhuma") ? "" : word.zh,
                 switch (hint) { case "pinyin" -> word.pretty(); case "sem-tom" -> Pinyin.noTones(word.py); default -> ""; },
                 note, "");
     }
+
+    /** a quantidade certa do desafio de agora: 六十四根木头 (com o 1º classificador da palavra) */
+    static String countZh() { return Counting.zhCount(count) + word.mw.get(0).zh() + word.zh; }
+
+    static String countPy() { return Pinyin.pretty(Counting.pyCount(count) + " " + word.mw.get(0).py() + " " + word.py); }
 
     /**
      * Dica automática conforme quantas vezes já errou a palavra neste mundo: nas 3 primeiras com o pinyin inteiro
@@ -205,10 +226,11 @@ public final class Desafio {
         }
         final Vocab.Word target = word;
         final boolean prac = practice;
+        final int cnt = practice ? 0 : count;
         final double ref = cfg().refHz, tol = cfg().tol();
         WORK.submit(() -> {
-            Result r = analyze(audio, spoke, target, prac, ref, tol);
-            logAttempt(target, r, ref, mic);
+            Result r = cnt > 0 ? Quantity.of(target).analyze(audio, spoke, cnt, ref, tol) : analyze(audio, spoke, target, prac, ref, tol);
+            logAttempt(target, cnt, r, ref, mic);
             MinecraftClient.getInstance().execute(() -> { if (r0 == round) onResult(r); });
         });
     }
@@ -220,9 +242,9 @@ public final class Desafio {
     }
 
     /** uma linha por tentativa no latest.log: o que o mod ouviu e por que aceitou ou não */
-    private static void logAttempt(Vocab.Word target, Result r, double ref, String mic) {
+    private static void logAttempt(Vocab.Word target, int cnt, Result r, double ref, String mic) {
         MandarimCraft.LOG.info("[tentativa] pedida: {} | ouvi: '{}' | sílabas {} | tons: {} | voz {} Hz (ref {} Hz) | {}",
-                target != null ? target.zh : "(treino)", r.heard(), r.syllablesOk() ? "ok" : "erradas",
+                target == null ? "(treino)" : cnt > 0 ? cnt + "× " + target.zh : target.zh, r.heard(), r.syllablesOk() ? "ok" : r.tip() != null ? "dica: " + r.tip() : "erradas",
                 r.tones() == null ? "-" : (r.tones().ok() ? "ok " : "erro ") + r.tones().summary(),
                 r.tones() == null ? "-" : Math.round(r.tones().medianHz()), Math.round(ref), mic);
     }
@@ -250,24 +272,17 @@ public final class Desafio {
 
     // ------------------------------------------------------------ análise (fora da thread do jogo)
 
-    record Result(boolean spoke, boolean pass, boolean syllablesOk, String heard, Answer.Form form, Vocab.Word heardWord, ToneCheck.Result tones) {}
+    /** tip: na quantidade, o número está certo mas o classificador (ou o 两) não: vem a dica em vez de contar como erro */
+    record Result(boolean spoke, boolean pass, boolean syllablesOk, String heard, Answer.Form form, Vocab.Word heardWord, ToneCheck.Result tones, String tip) {
+        Result(boolean spoke, boolean pass, boolean syllablesOk, String heard, Answer.Form form, Vocab.Word heardWord, ToneCheck.Result tones) {
+            this(spoke, pass, syllablesOk, heard, form, heardWord, tones, null);
+        }
+    }
 
     private static List<Answer.Form> forms(Vocab.Word w) {
         List<Answer.Form> f = new ArrayList<>();
         for (Vocab.Alt a : w.forms()) f.add(new Answer.Form(a.zh(), a.py(), a.rec()));
         return f;
-    }
-
-    /** pedaços seguidos (palavras do reconhecedor) que juntos dão exatamente este texto: [início, fim) ou null */
-    static int[] span(List<Speech.Piece> ps, String text) {
-        for (int i = 0; i < ps.size(); i++) {
-            StringBuilder b = new StringBuilder();
-            for (int j = i; j < ps.size() && b.length() < text.length(); j++) {
-                b.append(ps.get(j).text());
-                if (b.toString().equals(text)) return new int[]{i, j + 1};
-            }
-        }
-        return null;
     }
 
     private static Result analyze(float[] audio, boolean spoke, Vocab.Word target, boolean prac, double ref, double tol) {
@@ -293,8 +308,8 @@ public final class Desafio {
             double from = -1, to = -1; double[][] syl = null;
             if (h != null && !h.pieces().isEmpty()) {
                 // só o trecho da palavra pedida (ouviu "木头石头": o tom é conferido em 木头, não nas quatro sílabas)
-                int[] sp = span(h.pieces(), f.recJoined());
-                if (sp == null) sp = span(h.pieces(), f.zh());
+                int[] sp = Speech.span(h.pieces(), f.recJoined());
+                if (sp == null) sp = Speech.span(h.pieces(), f.zh());
                 if (sp == null) sp = new int[]{0, h.pieces().size()};
                 List<Speech.Piece> ps = h.pieces().subList(sp[0], sp[1]);
                 from = ps.get(0).start(); to = ps.get(ps.size() - 1).end();
@@ -330,6 +345,7 @@ public final class Desafio {
             return;
         }
         if (cur == null || word == null) { state = St.IDLE; return; }
+        if (count > 0) { onCountResult(r, now, tons); return; }
         if (r.pass()) {
             sendAnswer(true, r.heard());
             state = St.SHOW; showUntil = now + 3000;
@@ -360,6 +376,46 @@ public final class Desafio {
                 "Ouça e tente quando pegar de novo.");
         MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.ENTITY_VILLAGER_NO, 1.0f, 0.7f));
         playKey = word.key; playAt = now + 900;
+        cur = null;
+    }
+
+    /** resultado do "quantos você tem?": a dica de classificador não gasta tentativa (uma vez só); errou de vez, o servidor tira 1/4 da pilha */
+    private static void onCountResult(Result r, long now, String tons) {
+        String what = count + " × " + word.pt;
+        if (r.pass()) {
+            sendAnswer(true, r.heard());
+            state = St.SHOW; showUntil = now + 3000;
+            screen(Hud.GREEN, "✓ Isso!", what, countZh(), countPy(), tons, "");
+            MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.ENTITY_PLAYER_LEVELUP, 1.6f, 0.6f));
+            cur = null;
+            return;
+        }
+        if (r.tip() != null && !tipGiven) {
+            tipGiven = true;
+            state = St.RETRY_WAIT; retryCalibrate = false; retryAt = now + 3500;
+            screen(Hud.YELLOW, "Quase! O número está certo.", r.tip(), countZh(), countPy(), "", "");
+            retryTitle = "Mais uma vez:";
+            return;
+        }
+        if (attempt <= cfg().retries) {
+            attempt++;
+            state = St.RETRY_WAIT; retryCalibrate = false;
+            if (r.syllablesOk()) {
+                screen(Hud.YELLOW, "Quase! O tom não saiu certo:", what, countZh(), countPy(), tons, "");
+                retryTitle = "Mais uma vez, cuidado com o tom:"; retryAt = now + 2600;
+            } else {
+                screen(Hud.YELLOW, !r.spoke() ? "Não ouvi nada" : r.heard().isEmpty() ? "Não entendi" : "Ouvi: " + r.heard(),
+                        r.spoke() && !r.heard().isEmpty() ? "Confira o número e tente de novo." : "Fale de novo, mais perto do microfone.", "", "", "", "");
+                retryTitle = "Mais uma vez:"; retryAt = now + 1800;
+            }
+            return;
+        }
+        sendAnswer(false, r.heard());
+        state = St.SHOW; showUntil = now + 6500;
+        screen(Hud.RED, "✗ Não foi dessa vez", what, countZh(), countPy(),
+                !r.spoke() ? "Não ouvi nada a tempo." : r.syllablesOk() ? "Tons: " + tons : r.tip() != null ? r.tip() : r.heard().isEmpty() ? "Não entendi." : "Ouvi: " + r.heard(),
+                "Perdeu ¼ da pilha: " + (count + 3) / 4 + " de " + count + ".");
+        MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(SoundEvents.ENTITY_VILLAGER_NO, 1.0f, 0.7f));
         cur = null;
     }
 

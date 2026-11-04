@@ -11,14 +11,18 @@ import net.minecraft.util.Identifier;
 public final class Payloads {
     private Payloads() {}
 
-    /** servidor -> cliente: diga esta palavra (item novo no inventário). seen = quantas vezes já errou ela neste mundo (decide a dica) */
-    public record Challenge(String word, String item, int seconds, int seen) implements CustomPayload {
+    /**
+     * servidor -> cliente: diga esta palavra (item novo no inventário). seen = quantas vezes já errou neste mundo (decide a dica).
+     * count > 0: desafio de quantidade, "quantos você tem" (número + classificador); 0 = só a palavra
+     */
+    public record Challenge(String word, String item, int seconds, int seen, int count) implements CustomPayload {
         public static final CustomPayload.Id<Challenge> ID = new CustomPayload.Id<>(Identifier.of(MandarimCraft.MOD_ID, "challenge"));
         public static final PacketCodec<RegistryByteBuf, Challenge> CODEC = PacketCodec.tuple(
                 PacketCodecs.STRING, Challenge::word,
                 PacketCodecs.STRING, Challenge::item,
                 PacketCodecs.VAR_INT, Challenge::seconds,
                 PacketCodecs.VAR_INT, Challenge::seen,
+                PacketCodecs.VAR_INT, Challenge::count,
                 Challenge::new);
         @Override public CustomPayload.Id<? extends CustomPayload> getId() { return ID; }
     }

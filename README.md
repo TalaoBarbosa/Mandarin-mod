@@ -18,6 +18,7 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 
 - Em cada mundo, ative com **`/mandarim comecar`**. O que você já tinha no inventário também vira desafio, mas errar não tira esses itens; só os novos.
 - **Palavra nova vem com o pinyin.** Nas 3 primeiras vezes o desafio mostra 汉字 + pinyin com os tons; se errar mais 2 vezes a mesma palavra, mostra o pinyin sem as marcas de tom; depois disso, só o português (aí é traduzir de cabeça). A contagem é por mundo. Para fixar uma dica: `/hanyu dica`.
+- **A cada 20 minutos de jogo vem um "quantos você tem?"** sobre algo que você já aprendeu (uma pilha de 2 ou mais): diga o número com o classificador, ex.: 64 troncos → **六十四根木头** (liùshísì gēn mùtou); o nome no fim é opcional. Antes do classificador o 2 é 两 (两块石头). Usou 个 no lugar do classificador certo, ou 二 no lugar de 两: o mod dá a dica e mais uma chance. Errou: perde **¼ da pilha** (arredondado para cima), não tudo. A dica vai sumindo do mesmo jeito: frase inteira → só o classificador → nada.
 - Na primeira fala o mod pede para você ler uma frase (`你好，我是巴西人。`) e aprende a altura da sua voz. Dá para refazer com `/hanyu calibrar`.
 - Errou (ou o mod não entendeu), você ganha mais uma chance na hora; se foi só o **tom**, ele toca a pronúncia antes (`/hanyu chances 0` para tirar).
 - Cada tentativa fica registrada no `logs/latest.log` (o que o mod ouviu, os tons e o volume do microfone), para descobrir o que deu errado.
