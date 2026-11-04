@@ -3,6 +3,7 @@ package com.tales.mandarimcraft.client;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.tales.mandarimcraft.MandarimCraft;
 import com.tales.mandarimcraft.Vocab;
 import com.tales.mandarimcraft.net.Payloads;
 import net.fabricmc.api.ClientModInitializer;
@@ -13,6 +14,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -44,7 +46,8 @@ public class MandarimClient implements ClientModInitializer {
                 literal("hanyu")
                         .executes(c -> {
                             ClientConfig k = ClientConfig.get();
-                            c.getSource().sendFeedback(Text.literal("汉语: tons " + k.tones + " · tempo " + k.seconds + " s · dica " + k.hint + " · chances extras: " + k.retries +
+                            String ver = FabricLoader.getInstance().getModContainer(MandarimCraft.MOD_ID).map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("?");
+                            c.getSource().sendFeedback(Text.literal("汉语 (Mandarim Craft " + ver + "): tons " + k.tones + " · tempo " + k.seconds + " s · dica " + k.hint + " · chances extras: " + k.retries +
                                     " · voz " + (k.refHz > 0 ? Math.round(k.refHz) + " Hz" : "não calibrada") + " · reconhecimento: " + Speech.status() +
                                     "\n/hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <s> · dica auto|nenhuma|hanzi|pinyin · chances <0-2>").formatted(Formatting.GRAY));
                             return 1;
