@@ -71,16 +71,22 @@ public final class Pinyin {
     }
 
     /** "mu4tou5" -> "mùtou"; mantém espaços e apóstrofo do original */
-    public static String pretty(String py) {
+    public static String pretty(String py) { return write(py, true); }
+
+    /** "lv4bao3shi2" -> "lübaoshi": como pretty(), sem as marcas de tom (o ü continua ü) */
+    public static String noTones(String py) { return write(py, false); }
+
+    private static String write(String py, boolean tones) {
+        String s = py.replace("u:", "ü").replace("v", "ü");   // os índices do matcher são deste texto, não do original
         StringBuilder out = new StringBuilder();
-        Matcher m = SYL.matcher(py.replace("u:", "ü").replace("v", "ü"));
+        Matcher m = SYL.matcher(s);
         int last = 0;
         while (m.find()) {
-            out.append(py, last, m.start());
-            out.append(mark(m.group(1), Integer.parseInt(m.group(2))));
+            out.append(s, last, m.start());
+            out.append(mark(m.group(1), tones ? Integer.parseInt(m.group(2)) : 0));
             last = m.end();
         }
-        out.append(py.substring(last));
+        out.append(s.substring(last));
         return out.toString();
     }
 

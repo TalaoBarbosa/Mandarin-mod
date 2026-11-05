@@ -2,7 +2,12 @@ plugins {
     id 'fabric-loom' version '1.8-SNAPSHOT'
 }
 
-version = project.mod_version
+// versão com o commit (ex.: 0.1.0+c9c107c): o log do jogo e o /hanyu mostram qual .jar está rodando
+def commit = ''
+try {
+    commit = providers.exec { commandLine 'git', 'rev-parse', '--short', 'HEAD'; ignoreExitValue = true }.standardOutput.asText.get().trim()
+} catch (Exception ignored) {}
+version = commit ? "${project.mod_version}+${commit}" : project.mod_version
 group = project.maven_group
 base { archivesName = project.archives_base_name }
 

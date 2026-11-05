@@ -18,9 +18,8 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      # usa o Gradle do wrapper (8.10.2): com Gradle mais novo o Loom 1.8 monta um .jar vazio sem dar erro
       - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.10.2'
 
       - name: Versões mais novas do Fabric para 1.21.1
         run: |
@@ -38,7 +37,7 @@ jobs:
           ls -la src/main/resources/mandarimcraft/
 
       - name: Montar
-        run: gradle build --no-daemon --stacktrace
+        run: ./gradlew build --no-daemon --stacktrace
 
       - name: Guardar o .jar
         uses: actions/upload-artifact@v4
@@ -50,7 +49,9 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         env:
           GH_TOKEN: ${{ github.token }}
+        # release normal e marcado como o mais recente: pré-release não aparece no quadro "Releases" da página do repositório
         run: |
           JAR=$(ls build/libs/*.jar | grep -v sources | head -1)
+          VER=$(basename "$JAR" .jar | sed 's/^mandarimcraft-//')
           gh release delete latest -y --cleanup-tag || true
-          gh release create latest "$JAR" --title "Mandarim Craft (última versão)" --notes "Baixe o arquivo .jar e coloque na pasta mods do Minecraft 1.21.1 com Fabric." --prerelease --target "$GITHUB_SHA"
+          gh release create latest "$JAR" --title "Mandarim Craft $VER" --notes "Baixe o arquivo .jar e coloque na pasta mods do Minecraft 1.21.1 com Fabric (apague as versões antigas do mod de lá). No jogo, /hanyu mostra a versão: $VER." --latest --target "$GITHUB_SHA"

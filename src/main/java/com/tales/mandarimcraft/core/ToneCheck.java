@@ -185,10 +185,14 @@ public final class ToneCheck {
 
     /** @param sylSecs início e fim de cada sílaba em segundos (do reconhecedor, quando ele separa caractere por caractere); null = acha sozinho */
     public static Result check(float[] pcm, double fromSec, double toSec, double[][] sylSecs, String hanzi, String py, double refHz, double tol) {
+        List<Pinyin.Syl> syls = Pinyin.parse(py);
+        return check(pcm, fromSec, toSec, sylSecs, syls, Pinyin.expected(hanzi, syls), refHz, tol);
+    }
+
+    /** com os tons esperados já calculados (as quantidades têm regras próprias: veja Counting.expected) */
+    public static Result check(float[] pcm, double fromSec, double toSec, double[][] sylSecs, List<Pinyin.Syl> syls, int[] exp, double refHz, double tol) {
         Pitch.Track tr = Pitch.yin(pcm);
         double[] f = Pitch.clean(tr);
-        List<Pinyin.Syl> syls = Pinyin.parse(py);
-        int[] exp = Pinyin.expected(hanzi, syls);
         int n = syls.size();
         double med = Pitch.median(f);
         List<SylResult> res = new ArrayList<>();

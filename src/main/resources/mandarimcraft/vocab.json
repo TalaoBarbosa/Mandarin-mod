@@ -9,6 +9,16 @@
     "#minecraft:logs"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    },
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:木头"
    ],
@@ -23,6 +33,12 @@
     "#minecraft:planks"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:木",
     "w:板"
@@ -44,6 +60,12 @@
      "rec": "木棍"
     }
    ],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    }
+   ],
    "audio": [
     "w:棍子"
    ],
@@ -58,6 +80,20 @@
     "minecraft:crafting_table"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "张",
+     "py": "zhang1"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "台",
+     "py": "tai2"
+    }
+   ],
    "audio": [
     "w:工作",
     "w:台"
@@ -75,6 +111,16 @@
     "minecraft:barrel"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "只",
+     "py": "zhi1"
+    }
+   ],
    "audio": [
     "w:箱子"
    ],
@@ -89,6 +135,12 @@
     "#minecraft:doors"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "扇",
+     "py": "shan4"
+    }
+   ],
    "audio": [
     "w:门"
    ],
@@ -103,6 +155,12 @@
     "#minecraft:beds"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "张",
+     "py": "zhang1"
+    }
+   ],
    "audio": [
     "w:床"
    ],
@@ -118,6 +176,16 @@
     "#minecraft:chest_boats"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "条",
+     "py": "tiao2"
+    },
+    {
+     "zh": "艘",
+     "py": "sou1"
+    }
+   ],
    "audio": [
     "w:船"
    ],
@@ -133,6 +201,16 @@
     "minecraft:soul_torch"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "支",
+     "py": "zhi1"
+    },
+    {
+     "zh": "根",
+     "py": "gen1"
+    }
+   ],
    "audio": [
     "s:huo2",
     "s:ba3"
@@ -148,6 +226,16 @@
     "minecraft:ladder"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "架",
+     "py": "jia4"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "s:ti1",
     "w:子"
@@ -163,6 +251,12 @@
     "#minecraft:saplings"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "棵",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:树",
     "w:苗"
@@ -178,6 +272,12 @@
     "#minecraft:leaves"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "片",
+     "py": "pian4"
+    }
+   ],
    "audio": [
     "s:shu4",
     "s:ye4"
@@ -194,6 +294,16 @@
     "#minecraft:flowers"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "朵",
+     "py": "duo3"
+    },
+    {
+     "zh": "枝",
+     "py": "zhi1"
+    }
+   ],
    "audio": [
     "w:花"
    ],
@@ -212,6 +322,16 @@
     "minecraft:large_fern"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "棵",
+     "py": "ke1"
+    },
+    {
+     "zh": "根",
+     "py": "gen1"
+    }
+   ],
    "audio": [
     "w:草"
    ],
@@ -232,6 +352,12 @@
      "rec": "泥土"
     }
    ],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:土"
    ],
@@ -246,6 +372,16 @@
     "#minecraft:sand"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "堆",
+     "py": "dui1"
+    }
+   ],
    "audio": [
     "w:沙子"
    ],
@@ -263,6 +399,12 @@
     "#minecraft:stone_tool_materials"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:石头"
    ],
@@ -277,6 +419,12 @@
     "minecraft:sugar_cane"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    }
+   ],
    "audio": [
     "w:甘蔗"
    ],
@@ -291,6 +439,12 @@
     "minecraft:cactus"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "棵",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "s:xian1",
     "s:ren2",
@@ -307,6 +461,16 @@
     "minecraft:bamboo"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    },
+    {
+     "zh": "棵",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:竹子"
    ],
@@ -322,6 +486,12 @@
     "minecraft:crying_obsidian"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "s:hei1",
     "s:yao4",
@@ -340,6 +510,12 @@
     "minecraft:blue_ice"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:冰"
    ],
@@ -356,6 +532,12 @@
     "minecraft:powder_snow_bucket"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:雪"
    ],
@@ -370,6 +552,16 @@
     "minecraft:snowball"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:雪",
     "w:球"
@@ -385,6 +577,16 @@
     "#minecraft:wool"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "团",
+     "py": "tuan2"
+    }
+   ],
    "audio": [
     "w:羊",
     "w:毛"
@@ -400,6 +602,12 @@
     "#minecraft:coals"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:煤"
    ],
@@ -414,6 +622,12 @@
     "#minecraft:coal_ores"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:煤",
     "w:矿"
@@ -430,6 +644,12 @@
     "minecraft:raw_iron"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:铁",
     "w:矿"
@@ -452,6 +672,12 @@
      "rec": "铁 定"
     }
    ],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:铁"
    ],
@@ -466,6 +692,16 @@
     "minecraft:iron_block"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:铁",
     "w:块"
@@ -484,6 +720,12 @@
     "#minecraft:gold_ores"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:金",
     "w:子"
@@ -500,6 +742,12 @@
     "#minecraft:diamond_ores"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:钻石"
    ],
@@ -515,6 +763,12 @@
     "#minecraft:emerald_ores"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:绿",
     "w:宝石"
@@ -531,6 +785,20 @@
     "#minecraft:redstone_ores"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "s:hong2",
     "s:shi2"
@@ -548,6 +816,12 @@
     "#minecraft:copper_ores"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:铜"
    ],
@@ -570,6 +844,16 @@
      "rec": "熔炉"
     }
    ],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "台",
+     "py": "tai2"
+    }
+   ],
    "audio": [
     "w:炉子"
    ],
@@ -586,6 +870,16 @@
     "minecraft:tinted_glass"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "片",
+     "py": "pian4"
+    }
+   ],
    "audio": [
     "w:玻璃"
    ],
@@ -601,6 +895,12 @@
     "minecraft:bricks"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:砖"
    ],
@@ -615,6 +915,16 @@
     "minecraft:flint"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "s:huo3",
     "s:shi2"
@@ -630,6 +940,16 @@
     "minecraft:tnt"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "包",
+     "py": "bao1"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "w:炸药"
    ],
@@ -650,6 +970,12 @@
      "rec": "搞 子"
     }
    ],
+   "mw": [
+    {
+     "zh": "把",
+     "py": "ba3"
+    }
+   ],
    "audio": [
     "s:gao3"
    ],
@@ -664,6 +990,12 @@
     "#minecraft:axes"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "把",
+     "py": "ba3"
+    }
+   ],
    "audio": [
     "s:fu3",
     "w:头"
@@ -679,6 +1011,12 @@
     "#minecraft:shovels"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "把",
+     "py": "ba3"
+    }
+   ],
    "audio": [
     "w:铲",
     "w:子"
@@ -694,6 +1032,12 @@
     "#minecraft:swords"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "把",
+     "py": "ba3"
+    }
+   ],
    "audio": [
     "s:jian4"
    ],
@@ -708,6 +1052,12 @@
     "#minecraft:hoes"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "把",
+     "py": "ba3"
+    }
+   ],
    "audio": [
     "w:锄",
     "w:头"
@@ -723,6 +1073,12 @@
     "minecraft:bow"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "张",
+     "py": "zhang1"
+    }
+   ],
    "audio": [
     "w:弓"
    ],
@@ -737,6 +1093,16 @@
     "minecraft:crossbow"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "把",
+     "py": "ba3"
+    },
+    {
+     "zh": "张",
+     "py": "zhang1"
+    }
+   ],
    "audio": [
     "s:nu3"
    ],
@@ -751,6 +1117,16 @@
     "#minecraft:arrows"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "支",
+     "py": "zhi1"
+    },
+    {
+     "zh": "根",
+     "py": "gen1"
+    }
+   ],
    "audio": [
     "w:箭"
    ],
@@ -771,6 +1147,12 @@
      "rec": "盾牌"
     }
    ],
+   "mw": [
+    {
+     "zh": "面",
+     "py": "mian4"
+    }
+   ],
    "audio": [
     "s:dun4"
    ],
@@ -785,6 +1167,12 @@
     "minecraft:fishing_rod"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    }
+   ],
    "audio": [
     "w:鱼",
     "w:竿"
@@ -800,6 +1188,12 @@
     "minecraft:shears"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "把",
+     "py": "ba3"
+    }
+   ],
    "audio": [
     "w:剪刀"
    ],
@@ -815,6 +1209,12 @@
     "minecraft:recovery_compass"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "w:指南针"
    ],
@@ -829,6 +1229,16 @@
     "minecraft:clock"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "只",
+     "py": "zhi1"
+    }
+   ],
    "audio": [
     "w:钟"
    ],
@@ -844,6 +1254,12 @@
     "minecraft:filled_map"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "张",
+     "py": "zhang1"
+    }
+   ],
    "audio": [
     "w:地图"
    ],
@@ -858,6 +1274,12 @@
     "minecraft:flint_and_steel"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "s:da2",
     "s:huo3",
@@ -874,6 +1296,16 @@
     "minecraft:bucket"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "只",
+     "py": "zhi1"
+    }
+   ],
    "audio": [
     "w:桶"
    ],
@@ -888,6 +1320,12 @@
     "minecraft:water_bucket"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "s:shui2",
     "s:tong3"
@@ -903,6 +1341,12 @@
     "#minecraft:head_armor"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "顶",
+     "py": "ding3"
+    }
+   ],
    "audio": [
     "s:tou2",
     "s:kui1"
@@ -918,6 +1362,16 @@
     "#minecraft:chest_armor"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "件",
+     "py": "jian4"
+    },
+    {
+     "zh": "副",
+     "py": "fu4"
+    }
+   ],
    "audio": [
     "w:胸",
     "w:甲"
@@ -933,6 +1387,16 @@
     "#minecraft:leg_armor"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "副",
+     "py": "fu4"
+    },
+    {
+     "zh": "条",
+     "py": "tiao2"
+    }
+   ],
    "audio": [
     "w:护",
     "w:腿"
@@ -948,6 +1412,16 @@
     "#minecraft:foot_armor"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "双",
+     "py": "shuang1"
+    },
+    {
+     "zh": "只",
+     "py": "zhi1"
+    }
+   ],
    "audio": [
     "w:靴子"
    ],
@@ -962,6 +1436,16 @@
     "minecraft:apple"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:苹果"
    ],
@@ -977,6 +1461,16 @@
     "minecraft:enchanted_golden_apple"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:金",
     "w:苹果"
@@ -992,6 +1486,20 @@
     "minecraft:bread"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "条",
+     "py": "tiao2"
+    }
+   ],
    "audio": [
     "w:面包"
    ],
@@ -1007,6 +1515,20 @@
     "minecraft:hay_block"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "捆",
+     "py": "kun3"
+    },
+    {
+     "zh": "束",
+     "py": "shu4"
+    },
+    {
+     "zh": "根",
+     "py": "gen1"
+    }
+   ],
    "audio": [
     "w:小麦"
    ],
@@ -1025,6 +1547,16 @@
     "minecraft:torchflower_seeds"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "颗",
+     "py": "ke1"
+    },
+    {
+     "zh": "粒",
+     "py": "li4"
+    }
+   ],
    "audio": [
     "w:种子"
    ],
@@ -1040,6 +1572,16 @@
     "minecraft:golden_carrot"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "w:胡",
     "w:萝卜"
@@ -1056,6 +1598,16 @@
     "minecraft:poisonous_potato"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:土豆"
    ],
@@ -1070,6 +1622,16 @@
     "minecraft:baked_potato"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "s:kao2",
     "s:tu3",
@@ -1086,6 +1648,12 @@
     "minecraft:beef"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:牛",
     "w:肉"
@@ -1101,6 +1669,16 @@
     "minecraft:cooked_beef"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "份",
+     "py": "fen4"
+    }
+   ],
    "audio": [
     "w:牛",
     "w:排"
@@ -1117,6 +1695,12 @@
     "minecraft:cooked_porkchop"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:猪",
     "w:肉"
@@ -1133,6 +1717,12 @@
     "minecraft:cooked_chicken"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:鸡",
     "w:肉"
@@ -1149,6 +1739,12 @@
     "minecraft:cooked_mutton"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:羊",
     "w:肉"
@@ -1164,6 +1760,12 @@
     "#minecraft:fishes"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "条",
+     "py": "tiao2"
+    }
+   ],
    "audio": [
     "w:鱼"
    ],
@@ -1178,6 +1780,20 @@
     "minecraft:egg"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    },
+    {
+     "zh": "枚",
+     "py": "mei2"
+    }
+   ],
    "audio": [
     "w:鸡蛋"
    ],
@@ -1192,6 +1808,20 @@
     "minecraft:sugar"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "包",
+     "py": "bao1"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:糖"
    ],
@@ -1206,6 +1836,16 @@
     "minecraft:cake"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:蛋糕"
    ],
@@ -1220,6 +1860,16 @@
     "minecraft:cookie"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "片",
+     "py": "pian4"
+    }
+   ],
    "audio": [
     "w:饼干"
    ],
@@ -1235,6 +1885,20 @@
     "minecraft:melon"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "片",
+     "py": "pian4"
+    },
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "w:西瓜"
    ],
@@ -1251,6 +1915,12 @@
     "minecraft:jack_o_lantern"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "w:南",
     "w:瓜"
@@ -1267,6 +1937,20 @@
     "minecraft:red_mushroom"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "朵",
+     "py": "duo3"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:蘑菇"
    ],
@@ -1281,6 +1965,12 @@
     "minecraft:mushroom_stew"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "碗",
+     "py": "wan3"
+    }
+   ],
    "audio": [
     "w:蘑菇",
     "w:汤"
@@ -1296,6 +1986,12 @@
     "minecraft:honey_bottle"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "瓶",
+     "py": "ping2"
+    }
+   ],
    "audio": [
     "w:蜂蜜"
    ],
@@ -1311,6 +2007,16 @@
     "minecraft:glow_berries"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "颗",
+     "py": "ke1"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "s:jiang1",
     "s:guo3"
@@ -1326,6 +2032,12 @@
     "minecraft:milk_bucket"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "桶",
+     "py": "tong3"
+    }
+   ],
    "audio": [
     "w:牛奶"
    ],
@@ -1340,6 +2052,16 @@
     "minecraft:bowl"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "只",
+     "py": "zhi1"
+    }
+   ],
    "audio": [
     "w:碗"
    ],
@@ -1354,6 +2076,16 @@
     "minecraft:glass_bottle"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "只",
+     "py": "zhi1"
+    }
+   ],
    "audio": [
     "w:瓶子"
    ],
@@ -1370,6 +2102,12 @@
     "minecraft:lingering_potion"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "瓶",
+     "py": "ping2"
+    }
+   ],
    "audio": [
     "w:药",
     "w:水"
@@ -1385,6 +2123,16 @@
     "minecraft:string"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    },
+    {
+     "zh": "条",
+     "py": "tiao2"
+    }
+   ],
    "audio": [
     "w:线"
    ],
@@ -1399,6 +2147,16 @@
     "minecraft:feather"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    },
+    {
+     "zh": "片",
+     "py": "pian4"
+    }
+   ],
    "audio": [
     "w:羽毛"
    ],
@@ -1420,6 +2178,16 @@
      "rec": "皮革"
     }
    ],
+   "mw": [
+    {
+     "zh": "张",
+     "py": "zhang1"
+    },
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:皮"
    ],
@@ -1434,6 +2202,16 @@
     "minecraft:bone"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    },
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "w:骨头"
    ],
@@ -1448,6 +2226,20 @@
     "minecraft:bone_meal"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "包",
+     "py": "bao1"
+    },
+    {
+     "zh": "份",
+     "py": "fen4"
+    },
+    {
+     "zh": "把",
+     "py": "ba3"
+    }
+   ],
    "audio": [
     "s:gu2",
     "s:fen3"
@@ -1463,6 +2255,12 @@
     "minecraft:rotten_flesh"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "s:fu3",
     "s:rou4"
@@ -1478,6 +2276,16 @@
     "minecraft:gunpowder"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "包",
+     "py": "bao1"
+    },
+    {
+     "zh": "堆",
+     "py": "dui1"
+    }
+   ],
    "audio": [
     "w:火药"
    ],
@@ -1493,6 +2301,20 @@
     "minecraft:fermented_spider_eye"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "只",
+     "py": "zhi1"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "w:蜘蛛",
     "w:眼"
@@ -1508,6 +2330,16 @@
     "minecraft:ender_pearl"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "颗",
+     "py": "ke1"
+    },
+    {
+     "zh": "粒",
+     "py": "li4"
+    }
+   ],
    "audio": [
     "w:珍珠"
    ],
@@ -1525,6 +2357,12 @@
     "minecraft:enchanted_book"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "本",
+     "py": "ben3"
+    }
+   ],
    "audio": [
     "w:书"
    ],
@@ -1540,6 +2378,16 @@
     "minecraft:chiseled_bookshelf"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "座",
+     "py": "zuo4"
+    }
+   ],
    "audio": [
     "w:书架"
    ],
@@ -1554,6 +2402,12 @@
     "minecraft:paper"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "张",
+     "py": "zhang1"
+    }
+   ],
    "audio": [
     "w:纸"
    ],
@@ -1568,6 +2422,16 @@
     "minecraft:painting"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "幅",
+     "py": "fu2"
+    },
+    {
+     "zh": "张",
+     "py": "zhang1"
+    }
+   ],
    "audio": [
     "w:画"
    ],
@@ -1583,6 +2447,16 @@
     "minecraft:soul_lantern"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "盏",
+     "py": "zhan3"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "w:灯笼"
    ],
@@ -1597,6 +2471,16 @@
     "#minecraft:candles"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    },
+    {
+     "zh": "支",
+     "py": "zhi1"
+    }
+   ],
    "audio": [
     "w:蜡烛"
    ],
@@ -1605,12 +2489,22 @@
   {
    "key": "lingdang",
    "zh": "铃铛",
-   "py": "ling2dang1",
+   "py": "ling2dang5",
    "pt": "sino",
    "items": [
     "minecraft:bell"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "只",
+     "py": "zhi1"
+    }
+   ],
    "audio": [
     "s:ling2",
     "s:dang1"
@@ -1627,6 +2521,16 @@
     "#minecraft:hanging_signs"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "块",
+     "py": "kuai4"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "w:牌子"
    ],
@@ -1641,6 +2545,16 @@
     "#minecraft:stairs"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "级",
+     "py": "ji2"
+    }
+   ],
    "audio": [
     "w:楼梯"
    ],
@@ -1649,13 +2563,23 @@
   {
    "key": "zhalan",
    "zh": "栅栏",
-   "py": "zha4lan2",
+   "py": "zha4lan5",
    "pt": "cerca",
    "items": [
     "#minecraft:fences",
     "#minecraft:fence_gates"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "道",
+     "py": "dao4"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "s:zha4",
     "s:lan2"
@@ -1671,6 +2595,16 @@
     "#minecraft:buttons"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "颗",
+     "py": "ke1"
+    }
+   ],
    "audio": [
     "s:an4",
     "s:niu3"
@@ -1686,6 +2620,16 @@
     "#minecraft:anvil"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "块",
+     "py": "kuai4"
+    }
+   ],
    "audio": [
     "s:tie3",
     "s:zhen1"
@@ -1701,6 +2645,20 @@
     "minecraft:enchanting_table"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "张",
+     "py": "zhang1"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    },
+    {
+     "zh": "台",
+     "py": "tai2"
+    }
+   ],
    "audio": [
     "s:fu4",
     "s:mo2",
@@ -1720,6 +2678,20 @@
     "minecraft:activator_rail"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    },
+    {
+     "zh": "条",
+     "py": "tiao2"
+    },
+    {
+     "zh": "段",
+     "py": "duan4"
+    }
+   ],
    "audio": [
     "s:tie2",
     "s:gui3"
@@ -1739,6 +2711,12 @@
     "minecraft:tnt_minecart"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "辆",
+     "py": "liang4"
+    }
+   ],
    "audio": [
     "w:矿",
     "w:车"
@@ -1754,6 +2732,16 @@
     "minecraft:saddle"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "副",
+     "py": "fu4"
+    },
+    {
+     "zh": "个",
+     "py": "ge4"
+    }
+   ],
    "audio": [
     "s:ma3",
     "s:an1"
@@ -1769,6 +2757,16 @@
     "minecraft:lead"
    ],
    "alts": [],
+   "mw": [
+    {
+     "zh": "根",
+     "py": "gen1"
+    },
+    {
+     "zh": "条",
+     "py": "tiao2"
+    }
+   ],
    "audio": [
     "w:绳子"
    ],

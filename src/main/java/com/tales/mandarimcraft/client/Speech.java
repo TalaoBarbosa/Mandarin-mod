@@ -4,6 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.sun.jna.Function;
+import com.sun.jna.Library;
+import com.sun.jna.NativeLibrary;
+import com.sun.jna.Platform;
 import com.tales.mandarimcraft.MandarimCraft;
 import com.tales.mandarimcraft.Vocab;
 import net.fabricmc.loader.api.FabricLoader;
@@ -33,9 +37,10 @@ public final class Speech {
         public String joined() { return text.replace(" ", ""); }
     }
 
-    private static Model model;
+    // escritos na thread do reconhecimento e lidos na do jogo
+    private static volatile Model model;
     private static String grammar;
-    private static String status = "carregando";
+    private static volatile String status = "carregando";
     private static Set<String> modelWords = null;
 
     public static String status() { return status; }
@@ -47,21 +52,60 @@ public final class Speech {
         try {
             Path dir = FabricLoader.getInstance().getConfigDir().resolve("mandarimcraft").resolve("model");
             Path ok = dir.resolve(".pronto");
-            if (!Files.exists(ok)) {
+            String stamp = modelStamp();
+            if (!Files.exists(ok) || (stamp != null && !Files.readString(ok).equals(stamp))) {   // primeira vez, ou o mod veio com outro modelo
                 status = "preparando o reconhecimento de voz (só na primeira vez)";
+                deleteTree(dir);
                 unzipModel(dir);
-                Files.writeString(ok, "ok");
+                Files.writeString(ok, stamp);
             }
             Path root = findModelRoot(dir);
             LibVosk.setLogLevel(LogLevel.WARNINGS);
+            bindUtf8();
             model = new Model(root.toString());
             modelWords = readWords(root);
             grammar = buildGrammar();
             status = "pronto";
             MandarimCraft.LOG.info("Vosk pronto: {} palavras no modelo", modelWords == null ? "?" : modelWords.size());
         } catch (Throwable t) {
-            status = "erro: " + t.getMessage();
+            status = "erro: " + (t.getMessage() != null ? t.getMessage() : t.toString());
             MandarimCraft.LOG.error("Vosk não carregou", t);
+        }
+    }
+
+    /**
+     * O JNA converte texto pela codificação do sistema (no Windows em português, Cp1252), que não tem chinês:
+     * a gramática chegava ao Vosk como "??" e nada era reconhecido. Estas duas chamadas vão em UTF-8; o resto
+     * (inclusive o caminho do modelo, que pode ter acento no nome do usuário) continua como o Vosk faz.
+     */
+    private static Function setGrm, finalResult;
+
+    private static void bindUtf8() {
+        // a mesma biblioteca que o LibVosk acabou de registrar (mesmo nome e opções = mesma instância, sem carregar de novo)
+        NativeLibrary lib = NativeLibrary.getInstance(Platform.isWindows() ? "libvosk" : "vosk",
+                Collections.singletonMap(Library.OPTION_CLASSLOADER, LibVosk.class.getClassLoader()));
+        setGrm = lib.getFunction("vosk_recognizer_set_grm", Function.C_CONVENTION, "UTF-8");
+        finalResult = lib.getFunction("vosk_recognizer_final_result", Function.C_CONVENTION, "UTF-8");
+    }
+
+    /**
+     * identifica o model.zip que veio no mod (a 1ª entrada é a pasta com nome e versão, ex.: vosk-model-small-cn-0.22/);
+     * null se o mod veio sem ele (aí usa o que já foi extraído, se tiver)
+     */
+    private static String modelStamp() throws Exception {
+        try (InputStream in = Speech.class.getResourceAsStream("/mandarimcraft/model.zip")) {
+            if (in == null) return null;
+            try (ZipInputStream z = new ZipInputStream(in)) {
+                ZipEntry e = z.getNextEntry();
+                return "ok " + (e == null ? "" : e.getName());
+            }
+        }
+    }
+
+    private static void deleteTree(Path dir) throws Exception {
+        if (!Files.exists(dir)) return;
+        try (Stream<Path> s = Files.walk(dir)) {
+            for (Path p : (Iterable<Path>) s.sorted(Comparator.reverseOrder())::iterator) Files.delete(p);
         }
     }
 
@@ -127,23 +171,55 @@ public final class Speech {
             if (modelWords != null) for (String tok : p.split(" ")) if (!modelWords.contains(tok)) missing.add(tok);
             if (seen.add(p)) a.add(p);
         }
-        a.add("[unk]");
+        // sem "[unk]": com ele, a pronúncia de quem está aprendendo virava "não entendi"; sem ele o Vosk escolhe a
+        // palavra mais parecida e quem decide é a comparação com a pedida e o tom (com só ruído ele continua devolvendo vazio)
         if (!missing.isEmpty()) MandarimCraft.LOG.warn("Caracteres que o modelo não conhece: {}", missing);
         return a.toString();
     }
 
-    /** reconhece um trecho de áudio 16 kHz (float). Devolve null se o modelo não está pronto. */
-    public static Heard recognize(float[] pcm) {
+    /** pedaços seguidos (palavras do reconhecedor) que juntos dão exatamente este texto: [início, fim) ou null */
+    public static int[] span(List<Piece> ps, String text) {
+        for (int i = 0; i < ps.size(); i++) {
+            StringBuilder b = new StringBuilder();
+            for (int j = i; j < ps.size() && b.length() < text.length(); j++) {
+                b.append(ps.get(j).text());
+                if (b.toString().equals(text)) return new int[]{i, j + 1};
+            }
+        }
+        return null;
+    }
+
+    /** início e fim de cada sílaba: pedaço de 1 caractere (os números) já é uma sílaba; o de mais (o nome) é dividido por igual. null se não bate */
+    public static double[][] perSyllable(List<Piece> ps, int n) {
+        int chars = 0;
+        for (Piece p : ps) chars += p.text().length();
+        if (chars != n) return null;
+        double[][] out = new double[n][2];
+        int k = 0;
+        for (Piece p : ps) {
+            int c = p.text().length();
+            double d = (p.end() - p.start()) / c;
+            for (int i = 0; i < c; i++, k++) { out[k][0] = p.start() + d * i; out[k][1] = p.start() + d * (i + 1); }
+        }
+        return out;
+    }
+
+    /** reconhece um trecho de áudio 16 kHz (float) entre as palavras do mod. Devolve null se o modelo não está pronto. */
+    public static Heard recognize(float[] pcm) { return recognize(pcm, grammar); }
+
+    /** idem, com outra gramática (lista JSON de frases), como a de uma pergunta de quantidade */
+    public static Heard recognize(float[] pcm, String grammar) {
         if (model == null) return null;
         byte[] b = new byte[pcm.length * 2];
         for (int i = 0; i < pcm.length; i++) {
             int s = Math.max(-32768, Math.min(32767, Math.round(pcm[i] * 32767f)));
             b[2 * i] = (byte) (s & 0xff); b[2 * i + 1] = (byte) ((s >> 8) & 0xff);
         }
-        try (Recognizer rec = new Recognizer(model, 16000f, grammar)) {
+        try (Recognizer rec = new Recognizer(model, 16000f)) {
+            setGrm.invokeVoid(new Object[]{rec.getPointer(), grammar});   // não new Recognizer(model, rate, grammar) nem getFinalResult(): veja bindUtf8
             rec.setWords(true);
             rec.acceptWaveForm(b, b.length);
-            JsonObject o = JsonParser.parseString(rec.getFinalResult()).getAsJsonObject();
+            JsonObject o = JsonParser.parseString(finalResult.invokeString(new Object[]{rec.getPointer()}, false)).getAsJsonObject();
             List<Piece> ps = new ArrayList<>();
             if (o.has("result")) for (JsonElement el : o.getAsJsonArray("result")) {
                 JsonObject r = el.getAsJsonObject();

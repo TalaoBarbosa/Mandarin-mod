@@ -3,6 +3,10 @@ package com.tales.mandarimcraft;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.tales.mandarimcraft.core.Counting;
+import com.tales.mandarimcraft.core.Pinyin;
 import com.tales.mandarimcraft.net.Payloads;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -11,7 +15,9 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.command.CommandSource;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.command.CommandManager;
@@ -20,11 +26,13 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.WorldSavePath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Lado do servidor (também roda no mundo de um jogador só): vê quando entra um item novo no inventário,
@@ -36,11 +44,14 @@ public class MandarimCraft implements ModInitializer {
 
     /** segundos para falar (o cliente usa o próprio ajuste; este é o padrão do servidor) */
     public static final int SECONDS = 7;
+    /** de quanto em quanto tempo de jogo (com o mod ligado) vem um desafio de quantidade: 20 min (menos que isso cansa numa sessão longa) */
+    public static final int COUNT_EVERY_TICKS = 20 * 60 * 20;
 
     private static WorldData data;
     private static final Map<UUID, Active> ACTIVE = new HashMap<>();
 
-    private record Active(String word, String item, long startedMs) {}
+    /** count > 0: desafio de quantidade daquele item; 0 = palavra nova */
+    private record Active(String word, String item, long startedMs, int count) {}
 
     @Override
     public void onInitialize() {
@@ -90,7 +101,10 @@ public class MandarimCraft implements ModInitializer {
                         .then(CommandManager.literal("palavras").executes(MandarimCraft::cmdList))
                         .then(CommandManager.literal("faltam").executes(MandarimCraft::cmdMissing))
                         .then(CommandManager.literal("esquecer")
-                                .then(CommandManager.argument("palavra", StringArgumentType.word()).executes(MandarimCraft::cmdForget)))));
+                                // greedyString: word() só aceita a-z, 0-9 e _-.+, então 钻石 nem chegava ao comando
+                                .then(CommandManager.argument("palavra", StringArgumentType.greedyString())
+                                        .suggests(MandarimCraft::suggestLearned)
+                                        .executes(MandarimCraft::cmdForget)))));
         LOG.info("Mandarim Craft pronto");
     }
 
@@ -100,6 +114,7 @@ public class MandarimCraft implements ModInitializer {
         WorldData.PlayerData pd = data.get(p.getUuid());
         Active a = ACTIVE.get(p.getUuid());
         boolean off = pd.paused || p.isCreative() || p.isSpectator() || !ServerPlayNetworking.canSend(p, Payloads.Challenge.ID);
+        if (!off) pd.countTicks += 5;
         if (a != null) {
             long limit = 90_000L;   // tempo do cliente (com calibração e segunda tentativa) + folga; sem resposta: cancela sem castigo
             if (off || System.currentTimeMillis() - a.startedMs > limit || countWord(p, a.word) == 0) {
@@ -115,10 +130,34 @@ public class MandarimCraft implements ModInitializer {
             Vocab.Word w = Vocab.forStack(s);
             if (w == null || pd.learned.containsKey(w.key)) continue;
             String item = Registries.ITEM.getId(s.getItem()).toString();
-            ACTIVE.put(p.getUuid(), new Active(w.key, item, System.currentTimeMillis()));
-            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS));
+            ACTIVE.put(p.getUuid(), new Active(w.key, item, System.currentTimeMillis(), 0));
+            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, pd.fails.getOrDefault(w.key, 0), 0));
             return;
         }
+        // nenhum item novo: a cada 20 min, "quantos você tem?" de uma pilha de algo que ele já aprendeu
+        if (pd.countTicks >= COUNT_EVERY_TICKS) {
+            int slot = pickCountSlot(p, pd);
+            if (slot < 0) return;   // sem pilha boa agora: pergunta assim que tiver
+            ItemStack s = inv.getStack(slot);
+            Vocab.Word w = Vocab.forStack(s);
+            String item = Registries.ITEM.getId(s.getItem()).toString();
+            ACTIVE.put(p.getUuid(), new Active(w.key, item, System.currentTimeMillis(), s.getCount()));
+            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, pd.countFails.getOrDefault(w.key, 0), s.getCount()));
+            pd.countTicks = 0;
+        }
+    }
+
+    /** uma pilha de 2 ou mais de algo que ele já aprendeu, sorteada (ferramenta e armadura não empilham); -1 se não tem */
+    private static int pickCountSlot(ServerPlayerEntity p, WorldData.PlayerData pd) {
+        PlayerInventory inv = p.getInventory();
+        List<Integer> ok = new ArrayList<>();
+        for (int i = 0; i < inv.size(); i++) {
+            ItemStack s = inv.getStack(i);
+            if (s.getCount() < 2) continue;
+            Vocab.Word w = Vocab.forStack(s);
+            if (w != null && pd.learned.containsKey(w.key)) ok.add(i);
+        }
+        return ok.isEmpty() ? -1 : ok.get(p.getRandom().nextInt(ok.size()));
     }
 
     private static void onAnswer(ServerPlayerEntity p, Payloads.Answer ans) {
@@ -128,11 +167,12 @@ public class MandarimCraft implements ModInitializer {
         Vocab.Word w = Vocab.get(a.word);
         if (w == null) return;
         WorldData.PlayerData pd = data.get(p.getUuid());
-        if ("__mic__".equals(ans.heard())) {   // microfone não abriu: não é culpa do jogador, pausa sem tirar nada
+        if ("__mic__".equals(ans.heard())) {   // microfone ou reconhecimento de voz falhou: não é culpa do jogador, pausa sem tirar nada
             pd.paused = true; data.save();
-            p.sendMessage(Text.literal("[Mandarim Craft] O microfone não funcionou, então pausei (sem perder nada). Resolva e use /mandarim continuar.").formatted(Formatting.YELLOW), false);
+            p.sendMessage(Text.literal("[Mandarim Craft] O microfone ou o reconhecimento de voz não funcionou, então pausei (sem perder nada). Resolva e use /mandarim continuar.").formatted(Formatting.YELLOW), false);
             return;
         }
+        if (a.count > 0) { onCountAnswer(p, pd, w, a, ans.ok()); return; }
         if (ans.ok()) {
             pd.learned.put(w.key, System.currentTimeMillis());
             pd.grace.remove(w.key);
@@ -153,6 +193,44 @@ public class MandarimCraft implements ModInitializer {
             else if (grace) t.append(Text.literal(" — item que você já tinha: dessa vez não perdeu.").formatted(Formatting.YELLOW));
             p.sendMessage(t, false);
         }
+    }
+
+    /** resposta do "quantos você tem?": errou, perde 1/4 daquela pilha, arredondado para cima (não tudo, como na palavra nova) */
+    private static void onCountAnswer(ServerPlayerEntity p, WorldData.PlayerData pd, Vocab.Word w, Active a, boolean ok) {
+        Vocab.Alt mw = w.mw.get(0);
+        String said = Counting.zhCount(a.count) + mw.zh() + w.zh + " " + Pinyin.pretty(Counting.pyCount(a.count) + " " + mw.py() + " " + w.py);
+        Text what = Text.literal(" (" + a.count + " × " + w.pt + ")").formatted(Formatting.GRAY);
+        if (ok) {
+            p.sendMessage(Text.literal("✓ ").formatted(Formatting.GREEN).append(Text.literal(said).formatted(Formatting.WHITE)).append(what), false);
+            return;
+        }
+        int lost = removeSome(p, a.item, (a.count + 3) / 4);
+        pd.countFails.merge(w.key, 1, Integer::sum);
+        pd.itemsLost += lost;
+        data.save();
+        MutableText t = Text.literal("✗ ").formatted(Formatting.RED).append(Text.literal("Era " + said).formatted(Formatting.WHITE)).append(what);
+        if (lost > 0) t.append(Text.literal(" — perdeu " + lost + " de " + a.count + ".").formatted(Formatting.RED));
+        p.sendMessage(t, false);
+    }
+
+    /** tira até k deste item do inventário do jogador (e do cursor); devolve quantos tirou */
+    private static int removeSome(ServerPlayerEntity p, String itemId, int k) {
+        Item item = Registries.ITEM.get(Identifier.of(itemId));
+        PlayerInventory inv = p.getInventory();
+        int n = 0;
+        for (int i = 0; i < inv.size() && n < k; i++) {
+            ItemStack s = inv.getStack(i);
+            if (!s.isOf(item)) continue;
+            int take = Math.min(k - n, s.getCount());
+            s.decrement(take);
+            n += take;
+            if (s.isEmpty()) inv.setStack(i, ItemStack.EMPTY);
+        }
+        ItemStack cur = p.currentScreenHandler.getCursorStack();
+        if (n < k && cur.isOf(item)) { int take = Math.min(k - n, cur.getCount()); cur.decrement(take); n += take; }
+        inv.markDirty();
+        p.currentScreenHandler.sendContentUpdates();
+        return n;
     }
 
     /** quantos itens desta palavra o jogador tem (inventário + o que está no cursor) */
@@ -191,7 +269,8 @@ public class MandarimCraft implements ModInitializer {
     private static int cmdHelp(CommandContext<ServerCommandSource> c) {
         c.getSource().sendFeedback(() -> Text.literal(
                 "Mandarim Craft: /mandarim comecar · pausar · continuar · palavras (o que já aprendeu) · faltam (o que falta) · esquecer <palavra|tudo>\n" +
-                "No seu jogo: /hanyu calibrar · teste · tons rigido|normal|leve · tempo <segundos> · dica nenhuma|hanzi|pinyin"), false);
+                "A cada 20 min: \"quantos você tem?\" (número + classificador: 六十四根木头); errou, perde 1/4 da pilha.\n" +
+                "No seu jogo: /hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <segundos> · dica auto|nenhuma|hanzi|pinyin · chances <0-2>"), false);
         return 1;
     }
 
@@ -238,15 +317,36 @@ public class MandarimCraft implements ModInitializer {
         return 1;
     }
 
+    /** sugere as palavras que o jogador já aprendeu ou já errou (em 汉字) e "tudo" */
+    private static CompletableFuture<Suggestions> suggestLearned(CommandContext<ServerCommandSource> c, SuggestionsBuilder b) {
+        Set<String> opts = new LinkedHashSet<>();
+        ServerPlayerEntity p = c.getSource().getPlayer();
+        if (p != null && data != null) {
+            WorldData.PlayerData pd = data.get(p.getUuid());
+            for (String k : pd.learned.keySet()) { Vocab.Word w = Vocab.get(k); if (w != null) opts.add(w.zh); }
+            for (String k : pd.fails.keySet()) { Vocab.Word w = Vocab.get(k); if (w != null) opts.add(w.zh); }
+        }
+        opts.add("tudo");
+        return CommandSource.suggestMatching(opts, b);
+    }
+
+    /** a palavra volta a ser nova: pedida de novo e, com a dica automática, com o pinyin de novo (zera os erros também) */
     private static int cmdForget(CommandContext<ServerCommandSource> c) throws CommandSyntaxException {
         ServerPlayerEntity p = c.getSource().getPlayerOrThrow();
         WorldData.PlayerData pd = data.get(p.getUuid());
-        String arg = StringArgumentType.getString(c, "palavra");
+        String arg = StringArgumentType.getString(c, "palavra").trim();
         int n;
-        if (arg.equals("tudo")) { n = pd.learned.size(); pd.learned.clear(); }
-        else {
+        if (arg.equals("tudo")) {
+            Set<String> all = new HashSet<>(pd.learned.keySet()); all.addAll(pd.fails.keySet());
+            n = all.size(); pd.learned.clear(); pd.fails.clear(); pd.countFails.clear();
+        } else {
             n = 0;
-            for (Vocab.Word w : Vocab.all()) if (w.key.equals(arg) || w.zh.equals(arg)) { if (pd.learned.remove(w.key) != null) n++; }
+            for (Vocab.Word w : Vocab.all()) if (w.key.equals(arg) || w.zh.equals(arg)) {
+                boolean had = pd.learned.remove(w.key) != null;
+                if (pd.fails.remove(w.key) != null) had = true;
+                pd.countFails.remove(w.key);
+                if (had) n++;
+            }
         }
         data.save();
         final int fn = n;

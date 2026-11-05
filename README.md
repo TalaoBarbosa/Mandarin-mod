@@ -17,8 +17,11 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 ## Como jogar
 
 - Em cada mundo, ative com **`/mandarim comecar`**. O que você já tinha no inventário também vira desafio, mas errar não tira esses itens; só os novos.
+- **Palavra nova vem com o pinyin.** Nas 3 primeiras vezes o desafio mostra 汉字 + pinyin com os tons; se errar mais 2 vezes a mesma palavra, mostra o pinyin sem as marcas de tom; depois disso, só o português (aí é traduzir de cabeça). A contagem é por mundo. Para fixar uma dica: `/hanyu dica`.
+- **A cada 20 minutos de jogo vem um "quantos você tem?"** sobre algo que você já aprendeu (uma pilha de 2 ou mais): diga o número com o classificador, ex.: 64 troncos → **六十四根木头** (liùshísì gēn mùtou); o nome no fim é opcional. Antes do classificador o 2 é 两 (两块石头). Usou 个 no lugar do classificador certo, ou 二 no lugar de 两: o mod dá a dica e mais uma chance. Errou: perde **¼ da pilha** (arredondado para cima), não tudo. A dica vai sumindo do mesmo jeito: frase inteira → só o classificador → nada.
 - Na primeira fala o mod pede para você ler uma frase (`你好，我是巴西人。`) e aprende a altura da sua voz. Dá para refazer com `/hanyu calibrar`.
-- Quando só o **tom** sai errado, você ganha mais uma chance na hora (`/hanyu chances 0` para tirar).
+- Errou (ou o mod não entendeu), você ganha mais uma chance na hora; se foi só o **tom**, ele toca a pronúncia antes (`/hanyu chances 0` para tirar).
+- Cada tentativa fica registrada no `logs/latest.log` (o que o mod ouviu, os tons e o volume do microfone), para descobrir o que deu errado.
 
 ### Comandos do mundo
 | comando | o que faz |
@@ -26,7 +29,7 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 | `/mandarim comecar` · `pausar` · `continuar` | liga e desliga neste mundo |
 | `/mandarim palavras` | o que você já aprendeu |
 | `/mandarim faltam` | o que ainda falta |
-| `/mandarim esquecer <palavra\|tudo>` | volta a pedir a palavra |
+| `/mandarim esquecer <palavra\|tudo>` | a palavra volta a ser nova: é pedida de novo, com o pinyin |
 
 ### Comandos do seu jogo
 | comando | o que faz |
@@ -36,10 +39,17 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 | `/hanyu ouvir <palavra>` | toca a pronúncia (ex.: `/hanyu ouvir 钻石` ou `/hanyu ouvir diamante`) |
 | `/hanyu tons rigido\|normal\|leve` | quão exigente com os tons |
 | `/hanyu tempo <3-20>` | segundos para falar (padrão 7) |
-| `/hanyu dica nenhuma\|hanzi\|pinyin` | mostrar dica no desafio |
+| `/hanyu dica auto\|nenhuma\|hanzi\|pinyin` | dica no desafio (padrão `auto`: veja acima) |
 | `/hanyu calibrar` | refaz a medida da sua voz |
+| `/hanyu chances <0-2>` | quantas tentativas extras quando erra (padrão 1) |
+
+## Problemas comuns
+- **O mod não me ouve:** o Minecraft usa o microfone **padrão do Windows** (Configurações → Sistema → Som → Entrada), não o que você escolheu no Discord. Confira também Privacidade → Microfone → "Permitir que aplicativos da área de trabalho acessem o microfone". Depois feche e abra o jogo.
+- **A barrinha verde quase não mexe:** aumente o volume de entrada do microfone nas mesmas configurações de som.
+- **Acerta as sílabas e erra o tom toda hora:** refaça `/hanyu calibrar` e, se precisar, use `/hanyu tons normal` ou `leve`.
+- **Outro problema:** o `logs/latest.log` tem uma linha `[tentativa]` para cada fala, com o que o mod ouviu.
 
 ## Montar
-O GitHub Actions monta sozinho a cada envio (baixa o modelo de voz e publica em Releases). Localmente: `gradle build` com Java 21, depois de pôr o `vosk-model-small-cn-0.22.zip` em `src/main/resources/mandarimcraft/model.zip`.
+O GitHub Actions monta sozinho a cada envio (baixa o modelo de voz e publica em Releases). Localmente, com Java 21: ponha o `vosk-model-small-cn-0.22.zip` em `src/main/resources/mandarimcraft/model.zip` e rode `./gradlew build` (no Windows, `gradlew.bat build`). Use o wrapper: com outra versão do Gradle o `.jar` pode sair vazio.
 
 Licença MIT. Gravações: Shtooka/audio-cmn (CC BY-SA). Modelo de voz: Vosk (Apache 2.0).
