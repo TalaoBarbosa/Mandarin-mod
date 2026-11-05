@@ -49,7 +49,9 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         env:
           GH_TOKEN: ${{ github.token }}
+        # release normal e marcado como o mais recente: pré-release não aparece no quadro "Releases" da página do repositório
         run: |
           JAR=$(ls build/libs/*.jar | grep -v sources | head -1)
+          VER=$(basename "$JAR" .jar | sed 's/^mandarimcraft-//')
           gh release delete latest -y --cleanup-tag || true
-          gh release create latest "$JAR" --title "Mandarim Craft (última versão)" --notes "Baixe o arquivo .jar e coloque na pasta mods do Minecraft 1.21.1 com Fabric." --prerelease --target "$GITHUB_SHA"
+          gh release create latest "$JAR" --title "Mandarim Craft $VER" --notes "Baixe o arquivo .jar e coloque na pasta mods do Minecraft 1.21.1 com Fabric (apague as versões antigas do mod de lá). No jogo, /hanyu mostra a versão: $VER." --latest --target "$GITHUB_SHA"
