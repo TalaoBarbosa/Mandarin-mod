@@ -34,6 +34,38 @@ public final class ToneCheck {
 
     static double st(double hz, double ref) { return 12 * Math.log(hz / ref) / Math.log(2); }
 
+    /**
+     * Os limites abaixo funcionam melhor com a referência 2 semitons acima da altura média da voz. Medido com as 115
+     * gravações do mod: com a média, 88% das palavras ditas certo passam; com +2, 97% (e pega um pouco mais de tom
+     * errado). Referência baixa é o pior caso (-3: 77%): o 3º tom vira "caiu do alto" ou "não ficou baixo".
+     */
+    public static final double REF_UP = 2.0;
+
+    /**
+     * Junta as alturas medidas nas frases da calibração: descarta a que ficou longe das outras (microfone mexido, ruído,
+     * erro de oitava) e tira a média em escala log. 0 = nenhuma serviu.
+     */
+    public static double voiceCenter(double... hz) {
+        boolean[] in = calUsed(hz);
+        double sum = 0;
+        int n = 0;
+        for (int i = 0; i < hz.length; i++) if (in[i]) { sum += Math.log(hz[i]); n++; }
+        return n == 0 ? 0 : Math.exp(sum / n);
+    }
+
+    /** quais frases da calibração entram na conta: as que ficaram perto da do meio (a mediana sempre entra) */
+    public static boolean[] calUsed(double... hz) {
+        double[] s = Arrays.stream(hz).filter(x -> x > 0).sorted().toArray();
+        boolean[] in = new boolean[hz.length];
+        if (s.length == 0) return in;
+        double mid = s[s.length / 2];
+        for (int i = 0; i < hz.length; i++) in[i] = hz[i] > 0 && Math.abs(st(hz[i], mid)) <= CAL_SPREAD;
+        return in;
+    }
+
+    /** quanto uma frase da calibração pode se afastar da do meio (em semitons) e ainda contar */
+    public static final double CAL_SPREAD = 2.5;
+
     /** corrige pedaços uma oitava acima ou abaixo do pedaço principal (erro típico de detecção de altura) */
     static double[] fixOctaves(double[] c) {
         if (c.length < 2) return c;
@@ -177,7 +209,7 @@ public final class ToneCheck {
     /**
      * Confere os tons de uma palavra falada.
      * @param pcm áudio 16 kHz; @param fromSec/toSec trecho da palavra (do reconhecedor; use -1 para usar todo o trecho com voz)
-     * @param refHz referência da voz do jogador (mediana de falas anteriores; 0 = usa a desta fala)
+     * @param refHz altura média da voz do jogador (calibração + falas aceitas; 0 = usa a desta fala). A conta usa REF_UP acima dela.
      */
     public static Result check(float[] pcm, double fromSec, double toSec, String hanzi, String py, double refHz, double tol) {
         return check(pcm, fromSec, toSec, null, hanzi, py, refHz, tol);
@@ -200,7 +232,7 @@ public final class ToneCheck {
             for (int i = 0; i < n; i++) res.add(new SylResult(syls.get(i), exp[i], true, "sem voz para medir"));
             return new Result(true, res, med);
         }
-        double ref = refHz > 0 ? refHz : med;
+        double ref = (refHz > 0 ? refHz : med) * Math.pow(2, REF_UP / 12);
         int a = -1, b = -1;
         int fa = fromSec >= 0 ? (int) Math.floor(fromSec * 100) : 0, fb = toSec > 0 ? (int) Math.ceil(toSec * 100) : f.length;
         fa = Math.max(0, Math.min(f.length, fa - 5)); fb = Math.max(fa, Math.min(f.length, fb + 5));

@@ -58,7 +58,19 @@ public final class Desafio {
         Desafio.zh = zh; Desafio.py = py; Desafio.line2 = line2; Desafio.line3 = line3;
     }
 
-    public static final String CAL_ZH = "你好，我是巴西人。", CAL_PY = "nǐ hǎo, wǒ shì Bāxī rén";
+    /**
+     * Calibração: três frases curtas, cada uma com os quatro tons em ordem (1º 2º 3º 4º), lidas como se fala no jogo.
+     * Uma frase só (a antiga, 你好，我是巴西人) dava uma medida baixa (três 3º tons e o fim da frase caindo) e mudava
+     * muito de uma vez para outra; a média de três, descartando a que destoar, fica estável.
+     */
+    public static final String[][] CAL = {
+            {"风调雨顺", "fēng tiáo yǔ shùn", "vento e chuva na hora certa"},
+            {"千奇百怪", "qiān qí bǎi guài", "mil coisas esquisitas"},
+            {"英雄好汉", "yīng xióng hǎo hàn", "heróis valentes"},
+    };
+    /** qual frase da calibração está sendo lida, e a altura medida em cada uma */
+    static int calStep;
+    static final double[] calHz = new double[CAL.length];
 
     static ClientConfig cfg() { return ClientConfig.get(); }
 
@@ -98,6 +110,7 @@ public final class Desafio {
     public static boolean startCalibration() {
         if (state != St.IDLE && state != St.SHOW) return false;
         cur = null; word = null; icon = new ItemStack(Items.NOTE_BLOCK); practice = false; calibrateThenChallenge = false;
+        calStep = 0; calTries = 0;
         if (!Speech.ready()) { state = St.WAIT_MODEL; return true; }
         calibrate();
         return true;
@@ -107,23 +120,31 @@ public final class Desafio {
         MIC.stopQuiet();
         round++;
         state = St.IDLE; cur = null; pending = null; word = null; playKey = null; count = 0; waiting = null;
-        practice = false; calibrateThenChallenge = false; retryCalibrate = false; calTries = 0;
+        practice = false; calibrateThenChallenge = false; retryCalibrate = false; calTries = 0; calStep = 0;
     }
 
     private static void begin() {
         if (!Speech.ready()) { state = St.WAIT_MODEL; return; }
-        if (cfg().refHz <= 0) { calibrateThenChallenge = true; calibrate(); return; }
+        if (cfg().refHz <= 0) { calibrateThenChallenge = true; calStep = 0; calTries = 0; calibrate(); return; }
         listen();
     }
 
     static int calTries = 0;
 
+    /** lê a frase calStep da calibração */
     private static void calibrate() {
-        MIC.endSilenceMs = 1300;
+        MIC.endSilenceMs = 1300;   // quem está aprendendo lê sílaba por sílaba: pausa curta não é o fim
         if (!MIC.start()) { micFailed(); return; }
         state = St.CALIBRATE;
-        deadline = System.currentTimeMillis() + 9000;
-        screen(Hud.GRAY, "Primeiro, deixe o mod conhecer a sua voz", "Leia em voz normal:", CAL_ZH, CAL_PY, "", "");
+        deadline = System.currentTimeMillis() + 7000;
+        calScreen();
+    }
+
+    /** o quadro da frase calStep */
+    static void calScreen() {
+        String[] f = CAL[calStep];
+        screen(Hud.GRAY, (calibrateThenChallenge && calStep == 0 ? "Primeiro, a sua voz" : "Calibrando a voz") + " · frase " + (calStep + 1) + " de " + CAL.length,
+                "Leia em voz alta, como vai falar no jogo:", f[0], f[1], f[2], calStep == 0 ? "Os quatro tons em ordem: 1º 2º 3º 4º" : "");
     }
 
     private static void listen() {
@@ -131,19 +152,24 @@ public final class Desafio {
         if (!MIC.start()) { micFailed(); return; }
         state = St.LISTEN;
         deadline = System.currentTimeMillis() + cfg().seconds * 1000L;
+        listenScreen();
+    }
+
+    /** o quadro do desafio (palavra ou quantidade), com a dica do nível que veio do servidor */
+    static void listenScreen() {
         if (practice) { screen(Hud.GRAY, "Treino: diga o nome de um item", "Nada se perde aqui.", "", "", "", ""); return; }
-        String hint = hintFor(cur.seen());
+        String hint = hintFor(cur.level());
         if (count > 0) {   // a mesma dica que vai sumindo, só que da quantidade: frase inteira → só o classificador → nada
             Vocab.Alt mw = word.mw.get(0);
             boolean auto = cfg().hint.equals("auto");
             screen(Hud.GRAY, attempt > 1 ? retryTitle : "Quantos você tem? Diga em chinês:", count + " × " + word.pt,
                     switch (hint) { case "pinyin", "hanzi" -> countZh(); case "sem-tom" -> mw.zh(); default -> ""; },
                     switch (hint) { case "pinyin" -> countPy(); case "sem-tom" -> Pinyin.noTones(mw.py()); default -> ""; },
-                    !auto ? "" : cur.seen() == 0 ? "Número + classificador (o nome é opcional)." : hint.equals("sem-tom") ? "Esse é o classificador; o número é com você." : "",
+                    !auto ? "" : hint.equals("pinyin") ? "Número + classificador (o nome é opcional)." : hint.equals("sem-tom") ? "Esse é o classificador; o número é com você." : "",
                     "");
             return;
         }
-        String note = !cfg().hint.equals("auto") ? "" : cur.seen() == 0 ? "Palavra nova: leia o pinyin em voz alta." : hint.equals("sem-tom") ? "Agora sem as marcas: lembre dos tons." : "";
+        String note = !cfg().hint.equals("auto") ? "" : hint.equals("pinyin") ? "Leia o pinyin em voz alta, com os tons." : hint.equals("sem-tom") ? "Agora sem as marcas: lembre dos tons." : "";
         screen(Hud.GRAY, attempt > 1 ? retryTitle : "Diga em chinês:", word.pt,
                 hint.equals("nenhuma") ? "" : word.zh,
                 switch (hint) { case "pinyin" -> word.pretty(); case "sem-tom" -> Pinyin.noTones(word.py); default -> ""; },
@@ -156,14 +182,14 @@ public final class Desafio {
     static String countPy() { return Pinyin.pretty(Counting.pyCount(count) + " " + word.mw.get(0).py() + " " + word.py); }
 
     /**
-     * Dica automática conforme quantas vezes já errou a palavra neste mundo: nas 3 primeiras com o pinyin inteiro
-     * (pegar um bloco pela primeira vez na vida e perder por não saber a palavra pune demais), nas 2 seguintes sem as
-     * marcas de tom, depois só o português. Os outros ajustes do /hanyu dica valem sempre.
+     * Dica automática pelo nível que o servidor manda (Payloads.Challenge.level): 0 = pinyin inteiro, 1 = sem as marcas
+     * de tom (na quantidade: só o classificador), 2 = nada. O nível só sobe quando ele acerta: palavra que ainda não
+     * acertou vem sempre com o pinyin, por mais que erre. Os outros ajustes do /hanyu dica valem sempre.
      */
-    static String hintFor(int seen) {
+    static String hintFor(int level) {
         String h = cfg().hint;
         if (!h.equals("auto")) return h;
-        return seen < 3 ? "pinyin" : seen < 5 ? "sem-tom" : "nenhuma";
+        return level <= 0 ? "pinyin" : level == 1 ? "sem-tom" : "nenhuma";
     }
 
     private static void micFailed() {
@@ -257,11 +283,12 @@ public final class Desafio {
         final int r0 = round;
         final String mic = micInfo(audio, spoke);
         if (was == St.CALIBRATE) {
+            final int step = calStep + 1;
             WORK.submit(() -> {
                 double[] f0 = spoke ? Pitch.clean(Pitch.yin(audio)) : new double[0];
                 int voiced = 0; for (double f : f0) if (f > 0) voiced++;
                 final double m = Pitch.median(f0); final int v = voiced;
-                MandarimCraft.LOG.info("[calibração] altura {} Hz, {} quadros com voz | {}", Math.round(m), v, mic);
+                MandarimCraft.LOG.info("[calibração] frase {}: altura {} Hz, {} quadros com voz | {}", step, Math.round(m), v, mic);
                 MinecraftClient.getInstance().execute(() -> { if (r0 == round) onCalibrated(m, v); });
             });
             return;
@@ -291,23 +318,43 @@ public final class Desafio {
                 r.tones() == null ? "-" : Math.round(r.tones().medianHz()), Math.round(ref), mic);
     }
 
-    private static void onCalibrated(double med, int voiced) {
-        if (med <= 0 || voiced < 40) {   // não ouviu o bastante: tenta de novo sozinho (até 3 vezes)
-            if (++calTries >= 3) { calTries = 0; techFailed("Não consegui ouvir a sua voz", "Confira o microfone e tente /hanyu calibrar de novo."); return; }
+    /** terminou de medir uma frase: vai para a próxima ou, na última, junta as três */
+    static void onCalibrated(double med, int voiced) {
+        long now = System.currentTimeMillis();
+        if (med <= 0 || voiced < 30) {   // não ouviu o bastante: repete a mesma frase sozinho (até 3 vezes)
+            if (++calTries >= 3) { calTries = 0; calStep = 0; techFailed("Não consegui ouvir a sua voz", "Confira o microfone e tente /hanyu calibrar de novo."); return; }
             screen(Hud.YELLOW, "Não deu para ouvir direito", "Fale um pouco mais alto e perto do microfone.", "", "", "", "");
-            state = St.RETRY_WAIT; retryCalibrate = true; retryAt = System.currentTimeMillis() + 2500;
+            state = St.RETRY_WAIT; retryCalibrate = true; retryAt = now + 2500;
             return;
         }
         calTries = 0;
-        cfg().refHz = 0; cfg().samples = 0; cfg().addVoice(med);
-        if (calibrateThenChallenge && (cur != null || practice)) {
-            calibrateThenChallenge = false;
-            screen(Hud.GREEN, "✓ Voz calibrada (" + Math.round(med) + " Hz)", "Agora o item!", "", "", "", "");
-            state = St.RETRY_WAIT; retryCalibrate = false; retryAt = System.currentTimeMillis() + 1200;
+        calHz[calStep++] = med;
+        if (calStep < CAL.length) {
+            screen(Hud.GREEN, "✓ Frase " + calStep + " de " + CAL.length, "Agora a próxima.", "", "", "", "");
+            state = St.RETRY_WAIT; retryCalibrate = true; retryAt = now + 900;
             return;
         }
-        state = St.SHOW; showUntil = System.currentTimeMillis() + 3000;
-        screen(Hud.GREEN, "✓ Voz calibrada", "Altura média: " + Math.round(med) + " Hz", "", "", "", "");
+        calStep = 0;
+        double ref = ToneCheck.voiceCenter(calHz);
+        boolean[] in = ToneCheck.calUsed(calHz);
+        StringBuilder each = new StringBuilder();
+        int used = 0;
+        for (int i = 0; i < calHz.length; i++) {
+            if (in[i]) used++;
+            each.append(i > 0 ? ", " : "").append(Math.round(calHz[i])).append(in[i] ? "" : " (descartada)");
+        }
+        MandarimCraft.LOG.info("[calibração] voz {} Hz (frases: {} Hz)", Math.round(ref), each);
+        cfg().refHz = 0; cfg().samples = 0; cfg().addVoice(ref);
+        String sub = used == CAL.length ? "" : used == CAL.length - 1 ? "Uma frase destoou e ficou de fora."
+                : "As frases destoaram muito: se errar tom à toa, faça /hanyu calibrar.";
+        if (calibrateThenChallenge && (cur != null || practice)) {
+            calibrateThenChallenge = false;
+            screen(Hud.GREEN, "✓ Voz calibrada (" + Math.round(ref) + " Hz)", "Agora o item!", "", "", sub, "");
+            state = St.RETRY_WAIT; retryCalibrate = false; retryAt = now + 1200;
+            return;
+        }
+        state = St.SHOW; showUntil = now + 3500;
+        screen(Hud.GREEN, "✓ Voz calibrada", "Altura média: " + Math.round(ref) + " Hz", "", "", sub, "");
     }
 
     static boolean retryCalibrate = false;

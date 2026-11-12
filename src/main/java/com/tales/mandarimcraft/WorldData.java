@@ -20,7 +20,7 @@ public final class WorldData {
         public Map<String, Integer> fails = new HashMap<>();         // palavra -> quantas vezes errou
         public Set<String> grace = new HashSet<>();                  // itens que já tinha ao começar: errar não tira
         public int itemsLost = 0;
-        public Map<String, Integer> countFails = new HashMap<>();    // palavra -> quantas vezes errou a quantidade (decide a dica)
+        public Map<String, Integer> countLevel = new HashMap<>();    // palavra -> dica do "quantos você tem?": 0 tudo, 1 só o classificador, 2 nada
         public int countTicks = 0;                                   // tempo jogado desde o último desafio de quantidade
 
         /** campo apagado ou "null" no arquivo (editado à mão) não pode derrubar o servidor depois */
@@ -28,7 +28,7 @@ public final class WorldData {
             if (learned == null) learned = new LinkedHashMap<>();
             if (fails == null) fails = new HashMap<>();
             if (grace == null) grace = new HashSet<>();
-            if (countFails == null) countFails = new HashMap<>();
+            if (countLevel == null) countLevel = new HashMap<>();
             return this;
         }
     }

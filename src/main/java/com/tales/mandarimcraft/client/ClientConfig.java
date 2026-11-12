@@ -17,13 +17,13 @@ public final class ClientConfig {
     public int seconds = 7;            // tempo para falar
     public String tones = "rigido";    // rigido | normal | leve
     public int retries = 1;            // quando erra: mais quantas tentativas na mesma vez
-    public String hint = "auto";       // auto (pinyin nas palavras novas, vai sumindo) | nenhuma | hanzi | pinyin
+    public String hint = "auto";       // auto (pinyin até acertar; no "quantos você tem?" some conforme acerta) | nenhuma | hanzi | pinyin
     public boolean names = true;       // 汉字 + pinyin na dica dos itens (passar o mouse no inventário)
-    public double refHz = 0;           // altura média da voz (calibrar); 0 = ainda não calibrou
+    public double refHz = 0;           // altura média da voz (calibrar: três frases); 0 = ainda não calibrou
     public int samples = 0;            // quantas falas já entraram na média
     public int version = 0;            // formato do arquivo (ver sane())
 
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static ClientConfig INSTANCE;
@@ -52,10 +52,11 @@ public final class ClientConfig {
 
     /** o arquivo pode ter sido editado à mão: volta para o padrão o que estiver fora do que os comandos aceitam */
     private void sane() {
-        if (version < 2) {   // até a versão 1 "nenhuma" era o padrão de todo mundo, não uma escolha: passa para a dica automática
-            if ("nenhuma".equals(hint)) hint = "auto";
-            version = VERSION;
-        }
+        // até a versão 1 "nenhuma" era o padrão de todo mundo, não uma escolha: passa para a dica automática
+        if (version < 2 && "nenhuma".equals(hint)) hint = "auto";
+        // até a versão 2 a calibração era uma frase só e saía baixa (cheia de 3º tom): calibra de novo com as três frases
+        if (version < 3) { refHz = 0; samples = 0; }
+        version = VERSION;
         if (seconds < 3 || seconds > 20) seconds = 7;
         if (retries < 0 || retries > 2) retries = 1;
         if (tones == null || !List.of("rigido", "normal", "leve").contains(tones)) tones = "rigido";
@@ -73,8 +74,8 @@ public final class ClientConfig {
     }
 
     /**
-     * junta a altura desta fala na média da voz (em escala log). Peso pequeno: a calibração é uma frase inteira, e uma
-     * palavra solta puxa pelo tom dela (3º tom baixo, 1º alto); antes a 1ª palavra depois de calibrar já valia metade.
+     * junta a altura desta fala na média da voz (em escala log). Peso pequeno: a calibração são três frases com os quatro
+     * tons, e uma palavra solta puxa pelo tom dela (3º tom baixo, 1º alto); antes a 1ª palavra depois de calibrar já valia metade.
      */
     public void addVoice(double hz) {
         if (hz < 60 || hz > 450) return;

@@ -116,7 +116,7 @@ public class MandarimCraft implements ModInitializer {
         boolean off = pd.paused || p.isCreative() || p.isSpectator() || !ServerPlayNetworking.canSend(p, Payloads.Challenge.ID);
         if (!off) pd.countTicks += 5;
         if (a != null) {
-            long limit = 90_000L;   // tempo do cliente (com calibração e segunda tentativa) + folga; sem resposta: cancela sem castigo
+            long limit = 120_000L;   // tempo do cliente (com as três frases da calibração e a segunda tentativa) + folga; sem resposta: cancela sem castigo
             if (off || System.currentTimeMillis() - a.startedMs > limit || countWord(p, a.word) == 0) {
                 ACTIVE.remove(p.getUuid());
                 if (ServerPlayNetworking.canSend(p, Payloads.Cancel.ID)) ServerPlayNetworking.send(p, new Payloads.Cancel(a.word));
@@ -131,7 +131,8 @@ public class MandarimCraft implements ModInitializer {
             if (w == null || pd.learned.containsKey(w.key)) continue;
             String item = Registries.ITEM.getId(s.getItem()).toString();
             ACTIVE.put(p.getUuid(), new Active(w.key, item, System.currentTimeMillis(), 0));
-            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, pd.fails.getOrDefault(w.key, 0), 0));
+            // palavra que ele ainda não acertou: sempre com a dica inteira (errar não pode tirar o pinyin)
+            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, 0, 0));
             return;
         }
         // nenhum item novo: a cada 20 min, "quantos você tem?" de uma pilha de algo que ele já aprendeu
@@ -142,7 +143,7 @@ public class MandarimCraft implements ModInitializer {
             Vocab.Word w = Vocab.forStack(s);
             String item = Registries.ITEM.getId(s.getItem()).toString();
             ACTIVE.put(p.getUuid(), new Active(w.key, item, System.currentTimeMillis(), s.getCount()));
-            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, pd.countFails.getOrDefault(w.key, 0), s.getCount()));
+            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, pd.countLevel.getOrDefault(w.key, 0), s.getCount()));
             pd.countTicks = 0;
         }
     }
@@ -200,12 +201,14 @@ public class MandarimCraft implements ModInitializer {
         Vocab.Alt mw = w.mw.get(0);
         String said = Counting.zhCount(a.count) + mw.zh() + w.zh + " " + Pinyin.pretty(Counting.pyCount(a.count) + " " + mw.py() + " " + w.py);
         Text what = Text.literal(" (" + a.count + " × " + w.pt + ")").formatted(Formatting.GRAY);
+        // a dica diminui um passo quando acerta e volta um passo quando erra
+        pd.countLevel.put(w.key, Math.max(0, Math.min(2, pd.countLevel.getOrDefault(w.key, 0) + (ok ? 1 : -1))));
         if (ok) {
+            data.save();
             p.sendMessage(Text.literal("✓ ").formatted(Formatting.GREEN).append(Text.literal(said).formatted(Formatting.WHITE)).append(what), false);
             return;
         }
         int lost = removeSome(p, a.item, (a.count + 3) / 4);
-        pd.countFails.merge(w.key, 1, Integer::sum);
         pd.itemsLost += lost;
         data.save();
         MutableText t = Text.literal("✗ ").formatted(Formatting.RED).append(Text.literal("Era " + said).formatted(Formatting.WHITE)).append(what);
@@ -290,7 +293,7 @@ public class MandarimCraft implements ModInitializer {
             if (a != null) ServerPlayNetworking.send(p, new Payloads.Cancel(a.word));
         }
         c.getSource().sendFeedback(() -> Text.literal(on
-                ? "Mandarim Craft ativado. Itens novos no inventário viram desafio. Dica: faça /hanyu calibrar antes (lê uma frase para o mod conhecer a sua voz)."
+                ? "Mandarim Craft ativado. Itens novos no inventário viram desafio. Dica: faça /hanyu calibrar antes (lê três frases curtas para o mod conhecer a sua voz)."
                 : "Mandarim Craft pausado. /mandarim continuar para voltar.").formatted(on ? Formatting.GREEN : Formatting.GRAY), false);
         return 1;
     }
@@ -338,13 +341,13 @@ public class MandarimCraft implements ModInitializer {
         int n;
         if (arg.equals("tudo")) {
             Set<String> all = new HashSet<>(pd.learned.keySet()); all.addAll(pd.fails.keySet());
-            n = all.size(); pd.learned.clear(); pd.fails.clear(); pd.countFails.clear();
+            n = all.size(); pd.learned.clear(); pd.fails.clear(); pd.countLevel.clear();
         } else {
             n = 0;
             for (Vocab.Word w : Vocab.all()) if (w.key.equals(arg) || w.zh.equals(arg)) {
                 boolean had = pd.learned.remove(w.key) != null;
                 if (pd.fails.remove(w.key) != null) had = true;
-                pd.countFails.remove(w.key);
+                pd.countLevel.remove(w.key);
                 if (had) n++;
             }
         }

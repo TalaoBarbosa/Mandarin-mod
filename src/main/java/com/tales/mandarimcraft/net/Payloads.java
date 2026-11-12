@@ -12,16 +12,18 @@ public final class Payloads {
     private Payloads() {}
 
     /**
-     * servidor -> cliente: diga esta palavra (item novo no inventário). seen = quantas vezes já errou neste mundo (decide a dica).
+     * servidor -> cliente: diga esta palavra (item novo no inventário).
+     * level = quanta dica tirar (dica automática): 0 = tudo, com o pinyin e os tons; 1 = menos; 2 = nada. Sobe quando acerta,
+     * desce quando erra: errar nunca deixa mais difícil. Palavra nova é sempre 0 (ainda não acertou nenhuma vez).
      * count > 0: desafio de quantidade, "quantos você tem" (número + classificador); 0 = só a palavra
      */
-    public record Challenge(String word, String item, int seconds, int seen, int count) implements CustomPayload {
+    public record Challenge(String word, String item, int seconds, int level, int count) implements CustomPayload {
         public static final CustomPayload.Id<Challenge> ID = new CustomPayload.Id<>(Identifier.of(MandarimCraft.MOD_ID, "challenge"));
         public static final PacketCodec<RegistryByteBuf, Challenge> CODEC = PacketCodec.tuple(
                 PacketCodecs.STRING, Challenge::word,
                 PacketCodecs.STRING, Challenge::item,
                 PacketCodecs.VAR_INT, Challenge::seconds,
-                PacketCodecs.VAR_INT, Challenge::seen,
+                PacketCodecs.VAR_INT, Challenge::level,
                 PacketCodecs.VAR_INT, Challenge::count,
                 Challenge::new);
         @Override public CustomPayload.Id<? extends CustomPayload> getId() { return ID; }
