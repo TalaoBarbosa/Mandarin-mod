@@ -3,6 +3,9 @@ package com.tales.mandarimcraft.client;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 /**
@@ -27,6 +30,11 @@ public final class Hud {
         }
     }
 
+    /** fonte chinesa (recorte da LXGW WenKai GB, em assets/mandarimcraft/font): normal e grande; o que ela não tem cai na do Minecraft */
+    static final Identifier KAI = Identifier.of("mandarimcraft", "kai"), KAI_BIG = Identifier.of("mandarimcraft", "kai_big");
+
+    static MutableText kai(String s, Identifier font) { return Text.literal(s).setStyle(Style.EMPTY.withFont(font)); }
+
     private static long openedAt;
     private static boolean hidden = true;
 
@@ -35,11 +43,23 @@ public final class Hud {
      * versão compacta, numa faixa: o quadro inteiro cobriria a parte de cima do inventário (e a 1ª fileira de um baú).
      */
     public static void renderOnTop(DrawContext ctx) {
-        if (!visible()) return;
         ctx.getMatrices().push();
         ctx.getMatrices().translate(0, 0, 400);
-        compact(ctx);
+        waitingHint(ctx);
+        if (visible()) compact(ctx);
         ctx.getMatrices().pop();
+    }
+
+    /** desafio esperando um momento calmo: uma linha discreta no alto, para ele saber por que ainda não começou */
+    private static void waitingHint(DrawContext ctx) {
+        if (Desafio.state != Desafio.St.IDLE || Desafio.waiting == null || Desafio.pending == null) return;
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.options.hudHidden) return;
+        TextRenderer tr = mc.textRenderer;
+        String s = "汉语: desafio assim que você parar (" + Desafio.waiting + ")";
+        int w = tr.getWidth(s) + 12, x = (ctx.getScaledWindowWidth() - w) / 2;
+        panel(ctx, x, 2, w, 15, GRAY);
+        ctx.drawTextWithShadow(tr, s, x + 6, 6, GRAY);
     }
 
     /** marca quando o quadro aparece (pela mudança de estado: contar o tempo entre quadros falhava com o jogo travando) */
@@ -57,6 +77,7 @@ public final class Hud {
     }
 
     public static void render(DrawContext ctx) {
+        waitingHint(ctx);
         if (!visible()) return;
         Desafio.St st = Desafio.state;
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -66,7 +87,8 @@ public final class Hud {
         boolean listening = st == Desafio.St.LISTEN || st == Desafio.St.CALIBRATE;
         String title = st == Desafio.St.THINK ? Desafio.title + ".".repeat(1 + (int) (now / 350 % 3)) : Desafio.title;
         String zh = Desafio.zh, py = Desafio.py, l1 = Desafio.line1, l2 = Desafio.line2, l3 = Desafio.line3;
-        int zhW = zh.isEmpty() ? 0 : tr.getWidth(zh) * 2, pyW = py.isEmpty() ? 0 : tr.getWidth(py);
+        Text zhText = kai(zh, KAI_BIG);
+        int zhW = zh.isEmpty() ? 0 : tr.getWidth(zhText), pyW = py.isEmpty() ? 0 : tr.getWidth(py);
         boolean pyBeside = zhW + 6 + pyW <= 200;   // pinyin ao lado do 汉字 se couber; senão embaixo (a frase da calibração)
 
         // tamanho: a coluna de texto cabe a linha mais comprida; o item fica numa coluna própria à esquerda
@@ -99,12 +121,8 @@ public final class Hud {
         ty += 11;
         if (!l1.isEmpty()) { ctx.drawTextWithShadow(tr, l1, tx, ty, WHITE); ty += 11; }
         if (!zh.isEmpty()) {
-            ctx.getMatrices().push();
-            ctx.getMatrices().translate(tx, ty, 0);
-            ctx.getMatrices().scale(2f, 2f, 1f);   // dobro exato: o 汉字 continua nítido (1,6x deixava os pixels tortos)
-            ctx.drawTextWithShadow(tr, zh, 0, 0, WHITE);
-            ctx.getMatrices().pop();
-            if (pyW > 0 && pyBeside) ctx.drawTextWithShadow(tr, py, tx + zhW + 6, ty + 4, GOLD);
+            ctx.drawTextWithShadow(tr, zhText, tx, ty, WHITE);
+            if (pyW > 0 && pyBeside) ctx.drawTextWithShadow(tr, py, tx + zhW + 6, ty + 5, GOLD);
             ty += 19;
             if (pyW > 0 && !pyBeside) { ctx.drawTextWithShadow(tr, py, tx, ty, GOLD); ty += 11; }
         }
@@ -130,7 +148,8 @@ public final class Hud {
         // no resultado o nome vem na cor dele (verde, amarelo, vermelho); "Analisando…" substitui o tempo
         String name = Desafio.line1.isEmpty() ? Desafio.title : Desafio.line1;
         String right = listening ? secondsLeft(now) : st == Desafio.St.THINK ? "…" : "";
-        int nameW = tr.getWidth(name), zhW = tr.getWidth(Desafio.zh), pyW = tr.getWidth(Desafio.py), rightW = tr.getWidth(right);
+        Text zhText = kai(Desafio.zh, KAI);
+        int nameW = tr.getWidth(name), zhW = Desafio.zh.isEmpty() ? 0 : tr.getWidth(zhText), pyW = tr.getWidth(Desafio.py), rightW = tr.getWidth(right);
         int rowW = nameW + (zhW > 0 ? 8 + zhW : 0) + (pyW > 0 ? 4 + pyW : 0) + (rightW > 0 ? 10 + rightW : 0);
         int barW = listening ? Math.max(120, rowW) : 0;
         boolean hasIcon = !Desafio.icon.isEmpty();
@@ -145,7 +164,7 @@ public final class Hud {
         int ty = y + 7;
         ctx.drawTextWithShadow(tr, name, tx, ty, Desafio.color == GRAY ? WHITE : Desafio.color);
         int cx = tx + nameW;
-        if (zhW > 0) { ctx.drawTextWithShadow(tr, Desafio.zh, cx + 8, ty, WHITE); cx += 8 + zhW; }
+        if (zhW > 0) { ctx.drawTextWithShadow(tr, zhText, cx + 8, ty - 1, WHITE); cx += 8 + zhW; }
         if (pyW > 0) ctx.drawTextWithShadow(tr, Desafio.py, cx + 4, ty, GOLD);
         if (rightW > 0) ctx.drawTextWithShadow(tr, right, x + w - 5 - rightW, ty, GRAY);
         if (listening) bars(ctx, tx, y + 21, Math.min(barW, x + w - 5 - tx), now);

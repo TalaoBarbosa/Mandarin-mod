@@ -18,6 +18,7 @@ public final class ClientConfig {
     public String tones = "rigido";    // rigido | normal | leve
     public int retries = 1;            // quando erra: mais quantas tentativas na mesma vez
     public String hint = "auto";       // auto (pinyin nas palavras novas, vai sumindo) | nenhuma | hanzi | pinyin
+    public boolean names = true;       // 汉字 + pinyin na dica dos itens (passar o mouse no inventário)
     public double refHz = 0;           // altura média da voz (calibrar); 0 = ainda não calibrou
     public int samples = 0;            // quantas falas já entraram na média
     public int version = 0;            // formato do arquivo (ver sane())

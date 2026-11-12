@@ -270,7 +270,7 @@ public class MandarimCraft implements ModInitializer {
         c.getSource().sendFeedback(() -> Text.literal(
                 "Mandarim Craft: /mandarim comecar · pausar · continuar · palavras (o que já aprendeu) · faltam (o que falta) · esquecer <palavra|tudo>\n" +
                 "A cada 20 min: \"quantos você tem?\" (número + classificador: 六十四根木头); errou, perde 1/4 da pilha.\n" +
-                "No seu jogo: /hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <segundos> · dica auto|nenhuma|hanzi|pinyin · chances <0-2>"), false);
+                "No seu jogo: /hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <segundos> · dica auto|nenhuma|hanzi|pinyin · nomes sim|nao · chances <0-2>"), false);
         return 1;
     }
 

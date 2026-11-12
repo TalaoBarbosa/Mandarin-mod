@@ -20,6 +20,8 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    // o Fabric API vai dentro do .jar: instalar o mod vira um arquivo só (se a pessoa já tiver um, o Fabric usa o mais novo)
+    include "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     // reconhecimento de voz offline (o JNA já vem com o Minecraft)
     implementation "com.alphacephei:vosk:0.3.45"
     include "com.alphacephei:vosk:0.3.45"

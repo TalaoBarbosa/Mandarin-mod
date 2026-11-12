@@ -48,7 +48,8 @@ public final class Vocab {
 
     private static final Map<String, Word> BY_KEY = new LinkedHashMap<>();
     private static final Map<Identifier, Word> BY_ID = new HashMap<>();
-    private static final Map<Item, Optional<Word>> CACHE = new HashMap<>();
+    // usado pelo servidor (desafios) e pelo cliente (dica do item) ao mesmo tempo no mundo de um jogador só
+    private static final Map<Item, Optional<Word>> CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static synchronized void load() {
         if (!BY_KEY.isEmpty()) return;

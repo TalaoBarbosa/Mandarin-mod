@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.loader.api.FabricLoader;
@@ -38,6 +39,13 @@ public class MandarimClient implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(Desafio::reset));
         ClientTickEvents.END_CLIENT_TICK.register(Desafio::tick);
         HudRenderCallback.EVENT.register((ctx, tickCounter) -> { if (MinecraftClient.getInstance().currentScreen == null) Hud.render(ctx); });
+        // 汉字 + pinyin na dica do item: dá para ver (e ouvir com /hanyu ouvir) a palavra antes do desafio
+        ItemTooltipCallback.EVENT.register((stack, context, type, lines) -> {
+            if (!ClientConfig.get().names || lines.isEmpty()) return;
+            Vocab.Word w = Vocab.forStack(stack);
+            if (w == null || (Desafio.state != Desafio.St.IDLE && w == Desafio.word)) return;   // não entrega a resposta do desafio aberto
+            lines.add(1, Text.empty().append(Hud.kai(w.zh, Hud.KAI).formatted(Formatting.GOLD)).append(Text.literal("  " + w.pretty()).formatted(Formatting.GRAY)));
+        });
         // com inventário ou baú aberto (tirar item de um baú é o jeito mais comum de começar um desafio) o HUD fica
         // escurecido atrás da tela: aí o quadro é desenhado por cima dela
         ScreenEvents.AFTER_INIT.register((client, screen, w, h) -> ScreenEvents.afterRender(screen).register((s, ctx, mx, my, delta) -> Hud.renderOnTop(ctx)));
@@ -47,9 +55,9 @@ public class MandarimClient implements ClientModInitializer {
                         .executes(c -> {
                             ClientConfig k = ClientConfig.get();
                             String ver = FabricLoader.getInstance().getModContainer(MandarimCraft.MOD_ID).map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("?");
-                            c.getSource().sendFeedback(Text.literal("汉语 (Mandarim Craft " + ver + "): tons " + k.tones + " · tempo " + k.seconds + " s · dica " + k.hint + " · chances extras: " + k.retries +
+                            c.getSource().sendFeedback(Text.literal("汉语 (Mandarim Craft " + ver + "): tons " + k.tones + " · tempo " + k.seconds + " s · dica " + k.hint + " · chances extras: " + k.retries + " · nomes nos itens: " + (k.names ? "sim" : "nao") +
                                     " · voz " + (k.refHz > 0 ? Math.round(k.refHz) + " Hz" : "não calibrada") + " · reconhecimento: " + Speech.status() +
-                                    "\n/hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <s> · dica auto|nenhuma|hanzi|pinyin · chances <0-2>").formatted(Formatting.GRAY));
+                                    "\n/hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <s> · dica auto|nenhuma|hanzi|pinyin · nomes sim|nao · chances <0-2>").formatted(Formatting.GRAY));
                             return 1;
                         })
                         .then(literal("calibrar").executes(c -> busy(c, Desafio.startCalibration())))
@@ -77,6 +85,14 @@ public class MandarimClient implements ClientModInitializer {
                             ClientConfig.get().seconds = IntegerArgumentType.getInteger(c, "segundos"); ClientConfig.get().save();
                             c.getSource().sendFeedback(Text.literal("Tempo para falar: " + ClientConfig.get().seconds + " s")); return 1;
                         })))
+                        .then(literal("nomes").then(argument("sim_ou_nao", StringArgumentType.word())
+                                .suggests((c, b) -> { b.suggest("sim"); b.suggest("nao"); return b.buildFuture(); })
+                                .executes(c -> {
+                                    String v = StringArgumentType.getString(c, "sim_ou_nao");
+                                    if (!v.equals("sim") && !v.equals("nao")) { c.getSource().sendError(Text.literal("Use sim ou nao.")); return 0; }
+                                    ClientConfig.get().names = v.equals("sim"); ClientConfig.get().save();
+                                    c.getSource().sendFeedback(Text.literal("Nome em chinês na dica dos itens: " + v)); return 1;
+                                })))
                         .then(literal("chances").then(argument("n", IntegerArgumentType.integer(0, 2)).executes(c -> {
                             ClientConfig.get().retries = IntegerArgumentType.getInteger(c, "n"); ClientConfig.get().save();
                             c.getSource().sendFeedback(Text.literal("Chances extras quando erra: " + ClientConfig.get().retries)); return 1;

@@ -9,7 +9,7 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 
 ## Instalar
 
-1. Minecraft Java **1.21.1** com o **Fabric Loader** (instalador em fabricmc.net) e o mod **Fabric API** para 1.21.1.
+1. Minecraft Java **1.21.1** com o **Fabric Loader** (instalador em fabricmc.net). O **Fabric API** já vem dentro do mod: não precisa instalar à parte.
 2. Baixe o `mandarimcraft-….jar` em **Releases → latest** deste repositório e coloque na pasta `mods` (no Windows: `%appdata%\.minecraft\mods`).
 3. Abra o jogo. Na primeira vez ele prepara o reconhecimento de voz (uns segundos).
 4. O Windows precisa deixar apps de computador usarem o microfone: Configurações → Privacidade → Microfone.
@@ -19,6 +19,8 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 - Em cada mundo, ative com **`/mandarim comecar`**. O que você já tinha no inventário também vira desafio, mas errar não tira esses itens; só os novos.
 - **Palavra nova vem com o pinyin.** Nas 3 primeiras vezes o desafio mostra 汉字 + pinyin com os tons; se errar mais 2 vezes a mesma palavra, mostra o pinyin sem as marcas de tom; depois disso, só o português (aí é traduzir de cabeça). A contagem é por mundo. Para fixar uma dica: `/hanyu dica`.
 - **A cada 20 minutos de jogo vem um "quantos você tem?"** sobre algo que você já aprendeu (uma pilha de 2 ou mais): diga o número com o classificador, ex.: 64 troncos → **六十四根木头** (liùshísì gēn mùtou); o nome no fim é opcional. Antes do classificador o 2 é 两 (两块石头). Usou 个 no lugar do classificador certo, ou 二 no lugar de 两: o mod dá a dica e mais uma chance. Errou: perde **¼ da pilha** (arredondado para cima), não tudo. A dica vai sumindo do mesmo jeito: frase inteira → só o classificador → nada.
+- **O desafio espera um momento calmo:** não começa enquanto você está levando dano, caindo, debaixo d'água, dormindo, cavando ou usando um item, nem se você está parado há mais de 30 s (longe do teclado). No alto da tela aparece por que ele está esperando.
+- **Passe o mouse num item** no inventário e a dica mostra o nome em chinês com o pinyin (木头 mùtou), menos o do desafio que está aberto. Para tirar: `/hanyu nomes nao`.
 - Na primeira fala o mod pede para você ler uma frase (`你好，我是巴西人。`) e aprende a altura da sua voz. Dá para refazer com `/hanyu calibrar`.
 - Errou (ou o mod não entendeu), você ganha mais uma chance na hora; se foi só o **tom**, ele toca a pronúncia antes (`/hanyu chances 0` para tirar).
 - Cada tentativa fica registrada no `logs/latest.log` (o que o mod ouviu, os tons e o volume do microfone), para descobrir o que deu errado.
@@ -42,6 +44,7 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 | `/hanyu dica auto\|nenhuma\|hanzi\|pinyin` | dica no desafio (padrão `auto`: veja acima) |
 | `/hanyu calibrar` | refaz a medida da sua voz |
 | `/hanyu chances <0-2>` | quantas tentativas extras quando erra (padrão 1) |
+| `/hanyu nomes sim\|nao` | nome em chinês na dica dos itens (padrão sim) |
 
 ## Problemas comuns
 - **O mod não me ouve:** o Minecraft usa o microfone **padrão do Windows** (Configurações → Sistema → Som → Entrada), não o que você escolheu no Discord. Confira também Privacidade → Microfone → "Permitir que aplicativos da área de trabalho acessem o microfone". Depois feche e abra o jogo.
@@ -52,4 +55,4 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 ## Montar
 O GitHub Actions monta sozinho a cada envio (baixa o modelo de voz e publica em Releases). Localmente, com Java 21: ponha o `vosk-model-small-cn-0.22.zip` em `src/main/resources/mandarimcraft/model.zip` e rode `./gradlew build` (no Windows, `gradlew.bat build`). Use o wrapper: com outra versão do Gradle o `.jar` pode sair vazio.
 
-Licença MIT. Gravações: Shtooka/audio-cmn (CC BY-SA). Modelo de voz: Vosk (Apache 2.0).
+Licença MIT. Gravações: Shtooka/audio-cmn (CC BY-SA). Modelo de voz: Vosk (Apache 2.0). Fonte chinesa: recorte da LXGW WenKai GB (SIL Open Font License 1.1), renomeado para "Mandarim Kai" como a licença pede (texto em `licenses/OFL-mandarim-kai.txt` dentro do `.jar`). Fabric API (Apache 2.0) vai dentro do `.jar`. A espera do momento calmo e a fonte vieram da ideia do mod [Learn or Die](https://github.com/Larenlearn/learn-or-die) (MIT).

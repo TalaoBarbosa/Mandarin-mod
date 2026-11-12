@@ -10,6 +10,7 @@ import com.tales.mandarimcraft.core.ToneCheck;
 import com.tales.mandarimcraft.net.Payloads;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -64,8 +65,10 @@ public final class Desafio {
     // ------------------------------------------------------------ entradas
 
     public static void onChallenge(Payloads.Challenge c) {
-        // espera até a tela do resultado acabar: dá para ler o que o mod ouviu e escutar a pronúncia antes de falar de novo
-        if (state != St.IDLE) { pending = c; return; }
+        // espera até a tela do resultado acabar (dá para ler o que o mod ouviu e escutar a pronúncia antes de falar de
+        // novo) e até um momento calmo: o tick tenta de novo
+        waiting = state == St.IDLE ? waitReason(MinecraftClient.getInstance(), System.currentTimeMillis()) : null;
+        if (state != St.IDLE || waiting != null) { pending = c; return; }
         cur = c; practice = false; attempt = 1; count = c.count(); tipGiven = false;
         word = Vocab.get(c.word());
         if (word == null) { cur = null; return; }
@@ -80,7 +83,7 @@ public final class Desafio {
             round++;
             cur = null; word = null; state = St.IDLE; calibrateThenChallenge = false; retryCalibrate = false;
         }
-        if (pending != null && pending.word().equals(c.word())) pending = null;
+        if (pending != null && pending.word().equals(c.word())) { pending = null; waiting = null; }
     }
 
     /** /hanyu teste: diga o nome de qualquer item, sem perder nada. false = está no meio de outro desafio */
@@ -103,7 +106,7 @@ public final class Desafio {
     public static void reset() {
         MIC.stopQuiet();
         round++;
-        state = St.IDLE; cur = null; pending = null; word = null; playKey = null; count = 0;
+        state = St.IDLE; cur = null; pending = null; word = null; playKey = null; count = 0; waiting = null;
         practice = false; calibrateThenChallenge = false; retryCalibrate = false; calTries = 0;
     }
 
@@ -175,10 +178,49 @@ public final class Desafio {
         cur = null; practice = false; calibrateThenChallenge = false;
     }
 
+    // ------------------------------------------------------------ momento calmo (ideia do mod Learn or Die)
+
+    /** por que o desafio que chegou ainda espera (aparece no alto da tela); null = não está esperando */
+    static String waiting;
+    private static long lastHurtAt, busyUntil, lastActiveAt;
+    private static double lastX, lastZ;
+    private static float lastYaw, lastPitch;
+
+    /** guarda, a cada tick, quando o jogador levou dano, cavou/usou algo e mexeu nele pela última vez */
+    private static void track(MinecraftClient mc, long now) {
+        ClientPlayerEntity p = mc.player;
+        if (p == null) return;
+        if (p.hurtTime > 0) lastHurtAt = now;
+        boolean acting = mc.options.attackKey.isPressed() || mc.options.useKey.isPressed() || p.isUsingItem()
+                || (mc.interactionManager != null && mc.interactionManager.isBreakingBlock());
+        if (acting) busyUntil = now + 1500;
+        if (acting || p.getX() != lastX || p.getZ() != lastZ || p.getYaw() != lastYaw || p.getPitch() != lastPitch) lastActiveAt = now;
+        lastX = p.getX(); lastZ = p.getZ(); lastYaw = p.getYaw(); lastPitch = p.getPitch();
+    }
+
+    /**
+     * null = pode começar o desafio agora. Senão, o motivo de esperar: no meio de uma luta, caindo, debaixo d'água,
+     * dormindo, cavando ou usando um item, ou parado há tempo (longe do teclado: aí ele nem ouviria a pergunta).
+     * Montado pode: dá para falar andando de cavalo ou de barco.
+     */
+    static String waitReason(MinecraftClient mc, long now) {
+        ClientPlayerEntity p = mc.player;
+        if (p == null) return null;
+        if (p.isDead()) return "morto";
+        if (now - lastHurtAt < 5000) return "levou dano";
+        if (p.isSleeping()) return "dormindo";
+        if (p.isSubmergedInWater() || p.isInLava()) return "debaixo d'água";
+        if (p.isFallFlying() || (!p.hasVehicle() && !p.isOnGround() && !p.isClimbing() && !p.getAbilities().flying)) return "no ar";
+        if (now < busyUntil) return "ocupado";
+        if (now - lastActiveAt > 30_000) return "parado";
+        return null;
+    }
+
     // ------------------------------------------------------------ a cada tick
 
     public static void tick(MinecraftClient client) {
         long now = System.currentTimeMillis();
+        track(client, now);
         if (playKey != null && now >= playAt) { playWord(playKey); playKey = null; }
         switch (state) {
             case WAIT_MODEL -> {
