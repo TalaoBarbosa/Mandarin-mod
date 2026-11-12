@@ -83,6 +83,8 @@ public final class Pinyin {
         int last = 0;
         while (m.find()) {
             out.append(s, last, m.start());
+            // sílaba grudada na anterior que começa com a, e ou o leva apóstrofo: shí'èr (十二), não shíèr
+            if (m.start() == last && last > 0 && "aeoAEO".indexOf(m.group(1).charAt(0)) >= 0) out.append('\'');
             out.append(mark(m.group(1), tones ? Integer.parseInt(m.group(2)) : 0));
             last = m.end();
         }
