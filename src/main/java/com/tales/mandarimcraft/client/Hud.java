@@ -1,5 +1,8 @@
 package com.tales.mandarimcraft.client;
 
+import com.tales.mandarimcraft.client.mixin.BossBarHudAccessor;
+import com.tales.mandarimcraft.core.Pinyin;
+import com.tales.mandarimcraft.core.ToneCheck;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -12,6 +15,7 @@ import net.minecraft.util.Identifier;
  * O quadro do desafio no alto da tela, no jeito das dicas de item do Minecraft: fundo escuro translúcido com a borda
  * roxa delas (verde, amarela ou vermelha no resultado), o item grande à esquerda, 汉字 em tamanho dobrado com o pinyin
  * dourado ao lado e o tempo numa barra de chefe que muda de cor quando está acabando. Entra e sai deslizando.
+ * No resultado, a curva da voz em cada sílaba aparece desenhada por cima da forma certa do tom.
  */
 public final class Hud {
     private Hud() {}
@@ -21,6 +25,9 @@ public final class Hud {
 
     private static final int BG = 0xB0100010;   // o fundo das dicas de item (0xF0100010), mais transparente
     private static final int PAD = 6, ICON = 32, GAP = 8, BAR = 182, MIN_TEXT = 160;
+    /** o desenho do tom de uma sílaba: largura e altura da caixinha, e o espaço entre duas */
+    private static final int CW = 34, CH = 24, CGAP = 6;
+    private static final int SHAPE = 0xFFB4B4B4;
     private static final String[] BAR_COLORS = {"blue", "yellow", "red", "pink"};
     private static final Identifier[] BAR_BG = new Identifier[BAR_COLORS.length], BAR_FG = new Identifier[BAR_COLORS.length];
     static {
@@ -57,9 +64,24 @@ public final class Hud {
         if (mc.options.hudHidden) return;
         TextRenderer tr = mc.textRenderer;
         String s = "汉语: desafio assim que você parar (" + Desafio.waiting + ")";
-        int w = tr.getWidth(s) + 12, x = (ctx.getScaledWindowWidth() - w) / 2;
-        panel(ctx, x, 2, w, 15, GRAY);
-        ctx.drawTextWithShadow(tr, s, x + 6, 6, GRAY);
+        int w = tr.getWidth(s) + 12, x = (ctx.getScaledWindowWidth() - w) / 2, y = top(ctx) - 4;
+        panel(ctx, x, y, w, 15, GRAY);
+        ctx.drawTextWithShadow(tr, s, x + 6, y + 4, GRAY);
+    }
+
+    /**
+     * onde o quadro começa: no alto da tela, ou logo abaixo das barras de chefe (dragão, Wither, invasão), que o
+     * Minecraft desenha ali (a 1ª em y = 12, 19 de altura cada, até 1/3 da tela)
+     */
+    private static int top(DrawContext ctx) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.currentScreen != null) return 6;   // com uma tela aberta as barras ficam atrás dela
+        int n = 0;
+        try {
+            int total = ((BossBarHudAccessor) mc.inGameHud.getBossBarHud()).mandarimcraft$bossBars().size();
+            for (int j = 12; n < total; ) { n++; j += 19; if (j >= ctx.getScaledWindowHeight() / 3) break; }
+        } catch (RuntimeException ignored) {}   // sem o acesso (outro mod mexeu nessa classe): fica no alto
+        return n == 0 ? 6 : 19 * n + 3;
     }
 
     /** marca quando o quadro aparece (pela mudança de estado: contar o tempo entre quadros falhava com o jogo travando) */
@@ -90,12 +112,18 @@ public final class Hud {
         Text zhText = kai(zh, KAI_BIG);
         int zhW = zh.isEmpty() ? 0 : tr.getWidth(zhText), pyW = py.isEmpty() ? 0 : tr.getWidth(py);
         boolean pyBeside = zhW + 6 + pyW <= 200;   // pinyin ao lado do 汉字 se couber; senão embaixo (a frase da calibração)
+        ToneCheck.Result cv = st == Desafio.St.THINK ? null : Desafio.curves;
+        int cvN = cv == null ? 0 : cv.syls().size();
+        String legA = "tom certo", legB = "sua voz";
+        int cvW = cvN == 0 ? 0 : cvN * (CW + CGAP) + 4 + 11 + Math.max(tr.getWidth(legA), tr.getWidth(legB));
 
         // tamanho: a coluna de texto cabe a linha mais comprida; o item fica numa coluna própria à esquerda
         int textW = Math.max(MIN_TEXT, Math.max(Math.max(tr.getWidth(title), tr.getWidth(l1)), Math.max(tr.getWidth(l2), tr.getWidth(l3))));
         textW = Math.max(textW, pyBeside ? zhW + (pyW > 0 ? 6 + pyW : 0) : Math.max(zhW, pyW));
         if (listening) textW = Math.max(textW, BAR);
+        textW = Math.max(textW, cvW);
         int textH = 11 + (l1.isEmpty() ? 0 : 11) + (zh.isEmpty() ? 0 : 19 + (!pyBeside && pyW > 0 ? 11 : 0))
+                + (cvN > 0 ? CH + 14 : 0)
                 + (l2.isEmpty() ? 0 : 11) + (l3.isEmpty() ? 0 : 11) + (listening ? 22 : 0) - 2;
         boolean hasIcon = !Desafio.icon.isEmpty();
         int sw = ctx.getScaledWindowWidth();
@@ -103,7 +131,8 @@ public final class Hud {
         int h = PAD + Math.max(textH, hasIcon ? ICON : 0) + PAD;
         int x = (sw - w) / 2;
 
-        int y = 6 - Math.round((1 - slide(now)) * (h + 8));
+        int top = top(ctx);
+        int y = top - Math.round((1 - slide(now)) * (h + top + 2));
 
         panel(ctx, x, y, w, h, Desafio.color);
 
@@ -126,12 +155,21 @@ public final class Hud {
             ty += 19;
             if (pyW > 0 && !pyBeside) { ctx.drawTextWithShadow(tr, py, tx, ty, GOLD); ty += 11; }
         }
+        if (cvN > 0) {
+            for (int i = 0; i < cvN; i++) curve(ctx, tr, tx + i * (CW + CGAP), ty + 1, cv.syls().get(i), i == cvN - 1);
+            int lx = tx + cvN * (CW + CGAP) + 4;
+            ctx.fill(lx, ty + 6, lx + 8, ty + 7, SHAPE);
+            ctx.drawTextWithShadow(tr, legA, lx + 11, ty + 2, DARK);
+            ctx.fill(lx, ty + 16, lx + 8, ty + 18, WHITE);
+            ctx.drawTextWithShadow(tr, legB, lx + 11, ty + 13, GRAY);
+            ty += CH + 14;
+        }
         if (!l2.isEmpty()) { ctx.drawTextWithShadow(tr, l2, tx, ty, GRAY); ty += 11; }
         if (!l3.isEmpty()) { ctx.drawTextWithShadow(tr, l3, tx, ty, DARK); ty += 11; }
 
         if (listening) {
-            boolean hearing = Desafio.MIC.speechStarted;
-            ctx.drawTextWithShadow(tr, hearing ? "♪ Ouvindo…" : "Fale agora", tx, ty, hearing ? GREEN : WHITE);
+            boolean hearing = Desafio.MIC.speechStarted, opening = Desafio.MIC.opening;
+            ctx.drawTextWithShadow(tr, opening ? "Abrindo o microfone…" : hearing ? "♪ Ouvindo…" : "Fale agora", tx, ty, opening ? GRAY : hearing ? GREEN : WHITE);
             String secs = secondsLeft(now);
             ctx.drawTextWithShadow(tr, secs, tx + BAR - tr.getWidth(secs), ty, GRAY);
             bars(ctx, tx, ty + 11, BAR, now);
@@ -170,6 +208,47 @@ public final class Hud {
         if (listening) bars(ctx, tx, y + 21, Math.min(barW, x + w - 5 - tx), now);
     }
 
+    /**
+     * O tom de uma sílaba: a forma certa em cinza e, por cima, a voz do jogador (verde se passou, vermelha se não).
+     * A linha pontilhada do meio é a altura média da voz dele; a caixa vai de 8 semitons abaixo a 7 acima dela.
+     */
+    private static void curve(DrawContext ctx, TextRenderer tr, int x, int y, ToneCheck.SylResult s, boolean fin) {
+        ctx.fill(x, y, x + CW, y + CH, 0x90000000);   // fundo escuro: as duas linhas têm que aparecer com qualquer paisagem atrás
+        int mid = y + row(0);
+        for (int i = 1; i < CW - 1; i += 3) ctx.fill(x + i, mid, x + i + 1, mid + 1, 0x40FFFFFF);
+        boolean checked = s.expected() >= 1 && s.expected() <= 4;
+        int prev = -1;
+        if (checked) for (int i = 2; i < CW - 2; i++) {
+            int r = y + row(ToneCheck.shape(s.expected(), fin, (i - 2) / (double) (CW - 5)));
+            stroke(ctx, x + i, prev < 0 ? r : prev, r, 1, SHAPE);
+            prev = r;
+        }
+        double[] c = s.curve();
+        int color = !checked ? GRAY : s.ok() ? GREEN : RED;
+        prev = -1;
+        if (c.length >= 2) for (int i = 2; i < CW - 2; i++) {
+            double p = (i - 2) / (double) (CW - 5) * (c.length - 1);
+            int a = (int) p;
+            double v = a + 1 < c.length ? c[a] + (c[a + 1] - c[a]) * (p - a) : c[c.length - 1];
+            int r = y + row(v);
+            stroke(ctx, x + i, prev < 0 ? r : prev, r, 2, color);
+            prev = r;
+        }
+        String name = Pinyin.mark(s.syl().base(), s.syl().tone());
+        ctx.drawTextWithShadow(tr, name, x + (CW - tr.getWidth(name)) / 2, y + CH + 2, color);
+    }
+
+    /** semitons em relação à voz média → linha dentro da caixinha (em cima = agudo) */
+    private static int row(double st) {
+        double v = Math.max(-8, Math.min(7, st));
+        return 1 + (int) Math.round((7 - v) / 15.0 * (CH - 4));
+    }
+
+    /** um trecho da linha: liga a altura da coluna anterior à desta, para a curva não ficar picotada */
+    private static void stroke(DrawContext ctx, int x, int from, int to, int thick, int color) {
+        ctx.fill(x, Math.min(from, to), x + 1, Math.max(from, to) + thick, color);
+    }
+
     private static String secondsLeft(long now) {
         return (Math.max(0, Desafio.deadline - now) + 999) / 1000 + " s";
     }
@@ -177,7 +256,7 @@ public final class Hud {
     /** tempo numa barra de chefe azul → amarela → vermelha (rosa na calibração); volume do microfone numa linha fina embaixo */
     private static void bars(DrawContext ctx, int x, int y, int width, long now) {
         boolean cal = Desafio.state == Desafio.St.CALIBRATE;
-        long total = cal ? 9000 : Math.max(1, ClientConfig.get().seconds * 1000L);
+        long total = Math.max(1, Desafio.total);
         float frac = Math.min(1f, (float) Math.max(0, Desafio.deadline - now) / total);
         int c = cal ? 3 : frac > 0.4f ? 0 : frac > 0.2f ? 1 : 2;
         int bw = Math.min(BAR, width);   // a textura tem 182 de largura: mais curta, corta a ponta direita

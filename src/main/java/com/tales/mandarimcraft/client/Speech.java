@@ -28,6 +28,10 @@ import java.util.zip.ZipInputStream;
 /**
  * Reconhecimento de voz offline (Vosk, modelo chinês pequeno). Só escolhe entre as palavras do mod
  * (gramática fechada), o que deixa bem mais preciso para palavras soltas. Devolve o tempo de cada caractere.
+ *
+ * Contexto: quem ouve já espera a resposta. O Vosk monta, com as frases da gramática, um modelo de bigramas pelas
+ * contagens; então a palavra pedida entra mais vezes na lista (CONTEXT_WEIGHT) e, além disso, olhamos as NBEST
+ * melhores hipóteses em vez de só a primeira: o reconhecedor costuma ficar entre duas ou três com nota quase igual.
  */
 public final class Speech {
     private Speech() {}
@@ -37,9 +41,22 @@ public final class Speech {
         public String joined() { return text.replace(" ", ""); }
     }
 
+    /** quantas hipóteses olhar: a palavra pedida vale se estiver entre elas */
+    public static final int NBEST = 3;
+    /**
+     * Quantas vezes a palavra pedida entra na gramática do desafio dela (1 = sem contexto). Medido com NBEST = 3:
+     * nas gravações de nativos as palavras certas aceitas vão de 90–94% (peso 1, só a 1ª hipótese) para 96–98%, sem
+     * passar a aceitar outra palavra qualquer; em fala muito ruim (voz sintética) vão de 13% para 27%, e outra palavra
+     * qualquer passa nas sílabas 4% das vezes (era 0,4%). Com peso 20 seriam 33% e 7%. Depois das sílabas ainda vêm os tons.
+     */
+    public static final int CONTEXT_WEIGHT = 8;
+    /** menos voz que isto (em quadros de 10 ms) no trecho da palavra não é fala: é ruído que o reconhecedor tomou pela palavra */
+    public static final int MIN_VOICED = 8;
+
     // escritos na thread do reconhecimento e lidos na do jogo
     private static volatile Model model;
     private static String grammar;
+    private static final Map<String, String> CONTEXT = new HashMap<>();
     private static volatile String status = "carregando";
     private static Set<String> modelWords = null;
 
@@ -162,12 +179,14 @@ public final class Speech {
         return b.toString();
     }
 
+    private static String rec(Vocab.Alt f) { return f.rec() != null && !f.rec().isEmpty() ? f.rec() : phrase(f.zh()); }
+
     private static String buildGrammar() {
         JsonArray a = new JsonArray();
         Set<String> seen = new HashSet<>();
         List<String> missing = new ArrayList<>();
         for (Vocab.Word w : Vocab.all()) for (Vocab.Alt f : w.forms()) {
-            String p = f.rec() != null && !f.rec().isEmpty() ? f.rec() : phrase(f.zh());
+            String p = rec(f);
             if (modelWords != null) for (String tok : p.split(" ")) if (!modelWords.contains(tok)) missing.add(tok);
             if (seen.add(p)) a.add(p);
         }
@@ -175,6 +194,19 @@ public final class Speech {
         // palavra mais parecida e quem decide é a comparação com a pedida e o tom (com só ruído ele continua devolvendo vazio)
         if (!missing.isEmpty()) MandarimCraft.LOG.warn("Caracteres que o modelo não conhece: {}", missing);
         return a.toString();
+    }
+
+    /** a gramática de todas as palavras, sem contexto (treino: vale qualquer item) */
+    public static String grammar() { return grammar; }
+
+    /** a gramática do desafio desta palavra: todas as palavras, com as formas da pedida repetidas (o contexto) */
+    public static synchronized String grammarFor(Vocab.Word target) {
+        if (target == null || grammar == null) return grammar;
+        return CONTEXT.computeIfAbsent(target.key, k -> {
+            JsonArray a = JsonParser.parseString(grammar).getAsJsonArray();
+            for (int i = 1; i < CONTEXT_WEIGHT; i++) for (Vocab.Alt f : target.forms()) a.add(rec(f));
+            return a.toString();
+        });
     }
 
     /** pedaços seguidos (palavras do reconhecedor) que juntos dão exatamente este texto: [início, fim) ou null */
@@ -204,11 +236,12 @@ public final class Speech {
         return out;
     }
 
-    /** reconhece um trecho de áudio 16 kHz (float) entre as palavras do mod. Devolve null se o modelo não está pronto. */
-    public static Heard recognize(float[] pcm) { return recognize(pcm, grammar); }
-
-    /** idem, com outra gramática (lista JSON de frases), como a de uma pergunta de quantidade */
-    public static Heard recognize(float[] pcm, String grammar) {
+    /**
+     * Reconhece um trecho de áudio 16 kHz (float) com a gramática dada (lista JSON de frases). Devolve as nbest melhores
+     * hipóteses, a preferida primeiro; lista vazia = só silêncio ou ruído; null = o modelo ainda não carregou.
+     * Erro do reconhecedor vira exceção: quem chama decide (não pode contar como resposta errada do jogador).
+     */
+    public static List<Heard> recognize(float[] pcm, String grammar, int nbest) {
         if (model == null) return null;
         byte[] b = new byte[pcm.length * 2];
         for (int i = 0; i < pcm.length; i++) {
@@ -217,19 +250,32 @@ public final class Speech {
         }
         try (Recognizer rec = new Recognizer(model, 16000f)) {
             setGrm.invokeVoid(new Object[]{rec.getPointer(), grammar});   // não new Recognizer(model, rate, grammar) nem getFinalResult(): veja bindUtf8
+            rec.setMaxAlternatives(Math.max(1, nbest));
             rec.setWords(true);
             rec.acceptWaveForm(b, b.length);
-            JsonObject o = JsonParser.parseString(finalResult.invokeString(new Object[]{rec.getPointer()}, false)).getAsJsonObject();
+            return parse(finalResult.invokeString(new Object[]{rec.getPointer()}, false));
+        } catch (Exception e) {
+            throw new IllegalStateException("erro no reconhecimento de voz", e);
+        }
+    }
+
+    /** {"alternatives":[{"confidence":…,"result":[{"word","start","end"}…],"text":"…"}…]}; hipóteses vazias ou repetidas ficam de fora */
+    static List<Heard> parse(String json) {
+        List<Heard> out = new ArrayList<>();
+        JsonObject o = JsonParser.parseString(json).getAsJsonObject();
+        if (!o.has("alternatives")) return out;
+        Set<String> seen = new HashSet<>();
+        for (JsonElement alt : o.getAsJsonArray("alternatives")) {
+            JsonObject ao = alt.getAsJsonObject();
+            String text = ao.has("text") ? ao.get("text").getAsString().replace("[unk]", "").trim() : "";
+            if (text.isEmpty() || !seen.add(text.replace(" ", ""))) continue;
             List<Piece> ps = new ArrayList<>();
-            if (o.has("result")) for (JsonElement el : o.getAsJsonArray("result")) {
+            if (ao.has("result")) for (JsonElement el : ao.getAsJsonArray("result")) {
                 JsonObject r = el.getAsJsonObject();
                 ps.add(new Piece(r.get("word").getAsString(), r.get("start").getAsDouble(), r.get("end").getAsDouble(), r.has("conf") ? r.get("conf").getAsDouble() : 1.0));
             }
-            String text = o.has("text") ? o.get("text").getAsString() : "";
-            return new Heard(text.replace("[unk]", "").trim(), ps);
-        } catch (Throwable t) {
-            MandarimCraft.LOG.error("Erro no reconhecimento", t);
-            return new Heard("", List.of());
+            out.add(new Heard(text, ps));
         }
+        return out;
     }
 }

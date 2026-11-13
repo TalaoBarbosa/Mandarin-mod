@@ -46,19 +46,42 @@ public class MandarimCraft implements ModInitializer {
     public static final int SECONDS = 7;
     /** de quanto em quanto tempo de jogo (com o mod ligado) vem um desafio de quantidade: 20 min (menos que isso cansa numa sessão longa) */
     public static final int COUNT_EVERY_TICKS = 20 * 60 * 20;
+    /** intervalo mínimo entre dois desafios que não são de item novo (revisão ou quantidade): 10 min de jogo */
+    public static final int PERIODIC_GAP_TICKS = 10 * 60 * 20;
+    /**
+     * Revisão espaçada: quanto tempo de jogo depois de acertar a palavra volta (10 min, 30 min, 2 h, 6 h; daí em diante
+     * a cada 6 h). Errou, volta para o começo. Só é pedida quando o item está no inventário: o contexto ajuda a lembrar.
+     */
+    private static final int[] REVIEW_MINUTES = {10, 30, 120, 360};
+    /** a partir de quantas revisões seguidas certas a palavra conta como dominada (o dicionário mostra a estrela) */
+    public static final int MASTERED_STAGE = REVIEW_MINUTES.length;
+    /**
+     * sem sinal do cliente por este tempo de servidor (20 s), o desafio é cancelado sem castigo. O cliente manda um sinal
+     * a cada 2 s. Em ticks, não em relógio: com o jogo de um jogador só pausado o servidor para, e o tempo não corre.
+     */
+    private static final int ALIVE_TIMEOUT_TICKS = 400;
 
     private static WorldData data;
     private static final Map<UUID, Active> ACTIVE = new HashMap<>();
 
-    /** count > 0: desafio de quantidade daquele item; 0 = palavra nova */
-    private record Active(String word, String item, long startedMs, int count) {}
+    /** o desafio em aberto de um jogador; count = tamanho da pilha (quantidade e revisão) */
+    private static final class Active {
+        final String word, item;
+        final int count, kind;
+        int silentTicks = 0;
+        Active(String word, String item, int count, int kind) { this.word = word; this.item = item; this.count = count; this.kind = kind; }
+    }
+
+    private static long reviewDelay(int stage) { return REVIEW_MINUTES[Math.max(0, Math.min(REVIEW_MINUTES.length - 1, stage))] * 1200L; }
 
     @Override
     public void onInitialize() {
         Vocab.load();
         PayloadTypeRegistry.playS2C().register(Payloads.Challenge.ID, Payloads.Challenge.CODEC);
         PayloadTypeRegistry.playS2C().register(Payloads.Cancel.ID, Payloads.Cancel.CODEC);
+        PayloadTypeRegistry.playS2C().register(Payloads.Progress.ID, Payloads.Progress.CODEC);
         PayloadTypeRegistry.playC2S().register(Payloads.Answer.ID, Payloads.Answer.CODEC);
+        PayloadTypeRegistry.playC2S().register(Payloads.Alive.ID, Payloads.Alive.CODEC);
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             data = WorldData.load(server.getSavePath(WorldSavePath.ROOT).resolve("mandarimcraft.json"));
@@ -79,6 +102,7 @@ public class MandarimCraft implements ModInitializer {
             } else if (pd.paused) {
                 p.sendMessage(Text.literal("[Mandarim Craft] pausado neste mundo. /mandarim continuar para voltar.").formatted(Formatting.GRAY), false);
             }
+            sendProgress(p, pd);
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> ACTIVE.remove(handler.getPlayer().getUuid()));
 
@@ -90,6 +114,13 @@ public class MandarimCraft implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(Payloads.Answer.ID, (payload, context) -> {
             ServerPlayerEntity p = context.player();
             context.server().execute(() -> onAnswer(p, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(Payloads.Alive.ID, (payload, context) -> {
+            ServerPlayerEntity p = context.player();
+            context.server().execute(() -> {
+                Active a = ACTIVE.get(p.getUuid());
+                if (a != null && a.word.equals(payload.word())) a.silentTicks = 0;
+            });
         });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(
@@ -114,10 +145,12 @@ public class MandarimCraft implements ModInitializer {
         WorldData.PlayerData pd = data.get(p.getUuid());
         Active a = ACTIVE.get(p.getUuid());
         boolean off = pd.paused || p.isCreative() || p.isSpectator() || !ServerPlayNetworking.canSend(p, Payloads.Challenge.ID);
-        if (!off) pd.countTicks += 5;
+        if (!off) { pd.countTicks += 5; pd.playTicks += 5; }
         if (a != null) {
-            long limit = 120_000L;   // tempo do cliente (com as três frases da calibração e a segunda tentativa) + folga; sem resposta: cancela sem castigo
-            if (off || System.currentTimeMillis() - a.startedMs > limit || countWord(p, a.word) == 0) {
+            // O cliente avisa a cada 2 s que o desafio continua (na tela, ou esperando um momento calmo). Antes o limite
+            // era contado desde a chegada do item: quem minerava 2 min antes de parar tinha o desafio cortado no meio da fala.
+            a.silentTicks += 5;
+            if (off || a.silentTicks > ALIVE_TIMEOUT_TICKS || countWord(p, a.word) == 0) {
                 ACTIVE.remove(p.getUuid());
                 if (ServerPlayNetworking.canSend(p, Payloads.Cancel.ID)) ServerPlayNetworking.send(p, new Payloads.Cancel(a.word));
             }
@@ -129,23 +162,54 @@ public class MandarimCraft implements ModInitializer {
             ItemStack s = inv.getStack(i);
             Vocab.Word w = Vocab.forStack(s);
             if (w == null || pd.learned.containsKey(w.key)) continue;
-            String item = Registries.ITEM.getId(s.getItem()).toString();
-            ACTIVE.put(p.getUuid(), new Active(w.key, item, System.currentTimeMillis(), 0));
             // palavra que ele ainda não acertou: sempre com a dica inteira (errar não pode tirar o pinyin)
-            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, 0, 0));
+            challenge(p, w, s, 0, s.getCount(), Payloads.NEW);
             return;
         }
-        // nenhum item novo: a cada 20 min, "quantos você tem?" de uma pilha de algo que ele já aprendeu
+        // nenhum item novo: de 10 em 10 min, no máximo, uma revisão ou (a cada 20 min) um "quantos você tem?"
+        if (pd.playTicks - pd.lastPeriodicTick < PERIODIC_GAP_TICKS) return;
         if (pd.countTicks >= COUNT_EVERY_TICKS) {
             int slot = pickCountSlot(p, pd);
-            if (slot < 0) return;   // sem pilha boa agora: pergunta assim que tiver
+            if (slot >= 0) {   // sem pilha boa agora: pergunta assim que tiver
+                ItemStack s = inv.getStack(slot);
+                Vocab.Word w = Vocab.forStack(s);
+                challenge(p, w, s, pd.countLevel.getOrDefault(w.key, 0), s.getCount(), Payloads.COUNT);
+                pd.countTicks = 0;
+                pd.lastPeriodicTick = pd.playTicks;
+                return;
+            }
+        }
+        int slot = pickReviewSlot(p, pd);
+        if (slot >= 0) {
             ItemStack s = inv.getStack(slot);
             Vocab.Word w = Vocab.forStack(s);
-            String item = Registries.ITEM.getId(s.getItem()).toString();
-            ACTIVE.put(p.getUuid(), new Active(w.key, item, System.currentTimeMillis(), s.getCount()));
-            ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, pd.countLevel.getOrDefault(w.key, 0), s.getCount()));
-            pd.countTicks = 0;
+            challenge(p, w, s, reviewOf(pd, w.key).level, s.getCount(), Payloads.REVIEW);
+            pd.lastPeriodicTick = pd.playTicks;
         }
+    }
+
+    private static void challenge(ServerPlayerEntity p, Vocab.Word w, ItemStack s, int level, int count, int kind) {
+        String item = Registries.ITEM.getId(s.getItem()).toString();
+        ACTIVE.put(p.getUuid(), new Active(w.key, item, count, kind));
+        ServerPlayNetworking.send(p, new Payloads.Challenge(w.key, item, SECONDS, level, count, kind));
+    }
+
+    /** a revisão de uma palavra aprendida; quem aprendeu antes de existir revisão começa agora (a 1ª vem em 10 min de jogo) */
+    private static WorldData.Review reviewOf(WorldData.PlayerData pd, String key) {
+        return pd.review.computeIfAbsent(key, k -> { WorldData.Review r = new WorldData.Review(); r.due = pd.playTicks + reviewDelay(0); return r; });
+    }
+
+    /** o item do inventário cuja palavra está há mais tempo esperando revisão; -1 se nenhuma está na hora */
+    private static int pickReviewSlot(ServerPlayerEntity p, WorldData.PlayerData pd) {
+        PlayerInventory inv = p.getInventory();
+        int best = -1; long bestDue = Long.MAX_VALUE;
+        for (int i = 0; i < inv.size(); i++) {
+            Vocab.Word w = Vocab.forStack(inv.getStack(i));
+            if (w == null || !pd.learned.containsKey(w.key)) continue;
+            long due = reviewOf(pd, w.key).due;
+            if (due <= pd.playTicks && due < bestDue) { best = i; bestDue = due; }
+        }
+        return best;
     }
 
     /** uma pilha de 2 ou mais de algo que ele já aprendeu, sorteada (ferramenta e armadura não empilham); -1 se não tem */
@@ -170,13 +234,17 @@ public class MandarimCraft implements ModInitializer {
         WorldData.PlayerData pd = data.get(p.getUuid());
         if ("__mic__".equals(ans.heard())) {   // microfone ou reconhecimento de voz falhou: não é culpa do jogador, pausa sem tirar nada
             pd.paused = true; data.save();
-            p.sendMessage(Text.literal("[Mandarim Craft] O microfone ou o reconhecimento de voz não funcionou, então pausei (sem perder nada). Resolva e use /mandarim continuar.").formatted(Formatting.YELLOW), false);
+            p.sendMessage(Text.literal("[Mandarim Craft] O microfone ou o reconhecimento de voz não funcionou, então pausei (sem perder nada). Resolva (/hanyu ajustes mostra o microfone) e use /mandarim continuar.").formatted(Formatting.YELLOW), false);
+            sendProgress(p, pd);
             return;
         }
-        if (a.count > 0) { onCountAnswer(p, pd, w, a, ans.ok()); return; }
+        if (a.kind == Payloads.COUNT) { onCountAnswer(p, pd, w, a, ans.ok()); sendProgress(p, pd); return; }
+        if (a.kind == Payloads.REVIEW) { onReviewAnswer(p, pd, w, a, ans.ok()); sendProgress(p, pd); return; }
         if (ans.ok()) {
             pd.learned.put(w.key, System.currentTimeMillis());
             pd.grace.remove(w.key);
+            pd.review.remove(w.key);
+            reviewOf(pd, w.key);   // a 1ª revisão vem daqui a 10 min de jogo
             data.save();
             p.sendMessage(Text.literal("✓ ").formatted(Formatting.GREEN)
                     .append(Text.literal(w.zh + " " + w.pretty()).formatted(Formatting.WHITE))
@@ -194,6 +262,51 @@ public class MandarimCraft implements ModInitializer {
             else if (grace) t.append(Text.literal(" — item que você já tinha: dessa vez não perdeu.").formatted(Formatting.YELLOW));
             p.sendMessage(t, false);
         }
+        sendProgress(p, pd);
+    }
+
+    /**
+     * resposta da revisão. Acertou: a próxima demora mais e vem com menos dica. Errou: a dica volta um passo, a revisão
+     * recomeça do intervalo curto e, de castigo, some 1/4 da pilha (arredondado para cima). Item único (ferramenta,
+     * armadura) não some na hora: a palavra volta a ser nova e é pedida de novo com o pinyin, aí sim valendo o item.
+     */
+    private static void onReviewAnswer(ServerPlayerEntity p, WorldData.PlayerData pd, Vocab.Word w, Active a, boolean ok) {
+        WorldData.Review r = reviewOf(pd, w.key);
+        Text said = Text.literal(w.zh + " " + w.pretty()).formatted(Formatting.WHITE);
+        Text what = Text.literal("  (" + w.pt + ")").formatted(Formatting.GRAY);
+        if (ok) {
+            r.stage++;
+            r.level = Math.min(2, r.level + 1);
+            r.due = pd.playTicks + reviewDelay(r.stage);
+            data.save();
+            p.sendMessage(Text.literal("✓ Revisão: ").formatted(Formatting.GREEN).append(said).append(what)
+                    .append(Text.literal(r.stage == MASTERED_STAGE ? " ★ dominada" : "").formatted(Formatting.GOLD)), false);
+            return;
+        }
+        pd.fails.merge(w.key, 1, Integer::sum);
+        MutableText t = Text.literal("✗ Revisão: ").formatted(Formatting.RED).append(Text.literal("era ").formatted(Formatting.WHITE)).append(said).append(what);
+        if (a.count >= 2) {
+            r.stage = 0;
+            r.level = Math.max(0, r.level - 1);
+            r.due = pd.playTicks + reviewDelay(0);
+            int lost = removeSome(p, a.item, (a.count + 3) / 4);
+            pd.itemsLost += lost;
+            if (lost > 0) t.append(Text.literal(" — perdeu " + lost + " de " + a.count + ".").formatted(Formatting.RED));
+        } else {
+            pd.learned.remove(w.key);
+            pd.review.remove(w.key);
+            t.append(Text.literal(" — voltou a ser palavra nova: vai ser pedida de novo, com o pinyin.").formatted(Formatting.YELLOW));
+        }
+        data.save();
+        p.sendMessage(t, false);
+    }
+
+    /** manda para o cliente o que o jogador já sabe (o dicionário mostra) */
+    private static void sendProgress(ServerPlayerEntity p, WorldData.PlayerData pd) {
+        if (!ServerPlayNetworking.canSend(p, Payloads.Progress.ID)) return;
+        Map<String, Integer> learned = new HashMap<>();
+        for (String k : pd.learned.keySet()) { WorldData.Review r = pd.review.get(k); learned.put(k, r == null ? 0 : r.stage); }
+        ServerPlayNetworking.send(p, new Payloads.Progress(pd.started && !pd.paused, learned, new HashMap<>(pd.fails)));
     }
 
     /** resposta do "quantos você tem?": errou, perde 1/4 daquela pilha, arredondado para cima (não tudo, como na palavra nova) */
@@ -273,7 +386,8 @@ public class MandarimCraft implements ModInitializer {
         c.getSource().sendFeedback(() -> Text.literal(
                 "Mandarim Craft: /mandarim comecar · pausar · continuar · palavras (o que já aprendeu) · faltam (o que falta) · esquecer <palavra|tudo>\n" +
                 "A cada 20 min: \"quantos você tem?\" (número + classificador: 六十四根木头); errou, perde 1/4 da pilha.\n" +
-                "No seu jogo: /hanyu calibrar · teste · ouvir <palavra> · tons rigido|normal|leve · tempo <segundos> · dica auto|nenhuma|hanzi|pinyin · nomes sim|nao · chances <0-2>"), false);
+                "Palavra aprendida volta em revisão (10 min, 30 min, 2 h, 6 h de jogo), com menos dica; errou, perde 1/4 da pilha.\n" +
+                "No seu jogo: tecla H = dicionário · /hanyu ajustes (microfone e opções) · calibrar · teste · ouvir <palavra>"), false);
         return 1;
     }
 
@@ -292,6 +406,7 @@ public class MandarimCraft implements ModInitializer {
             Active a = ACTIVE.remove(p.getUuid());
             if (a != null) ServerPlayNetworking.send(p, new Payloads.Cancel(a.word));
         }
+        sendProgress(p, pd);
         c.getSource().sendFeedback(() -> Text.literal(on
                 ? "Mandarim Craft ativado. Itens novos no inventário viram desafio. Dica: faça /hanyu calibrar antes (lê três frases curtas para o mod conhecer a sua voz)."
                 : "Mandarim Craft pausado. /mandarim continuar para voltar.").formatted(on ? Formatting.GREEN : Formatting.GRAY), false);
@@ -341,17 +456,19 @@ public class MandarimCraft implements ModInitializer {
         int n;
         if (arg.equals("tudo")) {
             Set<String> all = new HashSet<>(pd.learned.keySet()); all.addAll(pd.fails.keySet());
-            n = all.size(); pd.learned.clear(); pd.fails.clear(); pd.countLevel.clear();
+            n = all.size(); pd.learned.clear(); pd.fails.clear(); pd.countLevel.clear(); pd.review.clear();
         } else {
             n = 0;
             for (Vocab.Word w : Vocab.all()) if (w.key.equals(arg) || w.zh.equals(arg)) {
                 boolean had = pd.learned.remove(w.key) != null;
                 if (pd.fails.remove(w.key) != null) had = true;
                 pd.countLevel.remove(w.key);
+                pd.review.remove(w.key);
                 if (had) n++;
             }
         }
         data.save();
+        sendProgress(p, pd);
         final int fn = n;
         c.getSource().sendFeedback(() -> Text.literal(fn + (fn == 1 ? " palavra esquecida." : " palavras esquecidas.")), false);
         return 1;

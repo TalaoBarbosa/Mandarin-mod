@@ -13,6 +13,13 @@ import java.util.*;
 
 /** O que cada jogador já aprendeu neste mundo (arquivo mandarimcraft.json dentro da pasta do mundo). */
 public final class WorldData {
+    /** revisão espaçada de uma palavra aprendida */
+    public static final class Review {
+        public int stage = 0;      // quantas revisões seguidas acertou: decide o intervalo até a próxima
+        public int level = 1;      // dica da próxima: 0 pinyin inteiro, 1 sem as marcas de tom, 2 nada
+        public long due = 0;       // quando vem a próxima, em PlayerData.playTicks
+    }
+
     public static final class PlayerData {
         public boolean paused = true;          // começa pausado: só desafia depois de /mandarim comecar
         public boolean started = false;
@@ -22,6 +29,9 @@ public final class WorldData {
         public int itemsLost = 0;
         public Map<String, Integer> countLevel = new HashMap<>();    // palavra -> dica do "quantos você tem?": 0 tudo, 1 só o classificador, 2 nada
         public int countTicks = 0;                                   // tempo jogado desde o último desafio de quantidade
+        public long playTicks = 0;                                   // tempo jogado com o mod ligado (o relógio das revisões)
+        public long lastPeriodicTick = 0;                            // quando foi o último desafio de revisão ou de quantidade
+        public Map<String, Review> review = new HashMap<>();         // palavra aprendida -> a revisão dela
 
         /** campo apagado ou "null" no arquivo (editado à mão) não pode derrubar o servidor depois */
         PlayerData fix() {
@@ -29,6 +39,8 @@ public final class WorldData {
             if (fails == null) fails = new HashMap<>();
             if (grace == null) grace = new HashSet<>();
             if (countLevel == null) countLevel = new HashMap<>();
+            if (review == null) review = new HashMap<>();
+            review.values().removeIf(Objects::isNull);
             return this;
         }
     }

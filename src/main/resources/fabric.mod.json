@@ -12,6 +12,7 @@
     "main": ["com.tales.mandarimcraft.MandarimCraft"],
     "client": ["com.tales.mandarimcraft.client.MandarimClient"]
   },
+  "mixins": ["mandarimcraft.mixins.json"],
   "depends": {
     "fabricloader": ">=0.15.0",
     "minecraft": "~1.21.1",

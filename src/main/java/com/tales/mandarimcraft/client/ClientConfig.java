@@ -19,6 +19,7 @@ public final class ClientConfig {
     public int retries = 1;            // quando erra: mais quantas tentativas na mesma vez
     public String hint = "auto";       // auto (pinyin até acertar; no "quantos você tem?" some conforme acerta) | nenhuma | hanzi | pinyin
     public boolean names = true;       // 汉字 + pinyin na dica dos itens (passar o mouse no inventário)
+    public String mic = "";            // microfone escolhido nos ajustes (nome como o Java mostra); "" = o padrão do sistema
     public double refHz = 0;           // altura média da voz (calibrar: três frases); 0 = ainda não calibrou
     public int samples = 0;            // quantas falas já entraram na média
     public int version = 0;            // formato do arquivo (ver sane())
@@ -62,6 +63,7 @@ public final class ClientConfig {
         if (tones == null || !List.of("rigido", "normal", "leve").contains(tones)) tones = "rigido";
         if (hint == null || !List.of("auto", "nenhuma", "hanzi", "pinyin").contains(hint)) hint = "auto";
         if (!(refHz >= 60 && refHz <= 450)) { refHz = 0; samples = 0; }
+        if (mic == null) mic = "";
     }
 
     public void save() {

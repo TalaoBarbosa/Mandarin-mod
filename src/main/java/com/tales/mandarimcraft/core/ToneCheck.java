@@ -17,11 +17,32 @@ public final class ToneCheck {
         /** queda medida no contorno inteiro (sem cortar o começo vozeado): ajuda no 4º tom depois de m, n, l, w… */
         public double fallFull, imxFull;
         public int n;
+        /** a curva alisada da sílaba inteira, em semitons em relação à referência da conta (para desenhar) */
+        public double[] curve;
     }
 
-    public record SylResult(Pinyin.Syl syl, int expected, boolean ok, String why) {}
+    /** curve = a voz nesta sílaba, em semitons acima ou abaixo da altura média do jogador (vazia se não deu para medir) */
+    public record SylResult(Pinyin.Syl syl, int expected, boolean ok, String why, double[] curve) {
+        public SylResult(Pinyin.Syl syl, int expected, boolean ok, String why) { this(syl, expected, ok, why, new double[0]); }
+    }
 
-    public record Result(boolean ok, List<SylResult> syls, double medianHz) {
+    /**
+     * A forma de cada tom para desenhar ao lado da voz do jogador, em semitons em relação à altura média dele
+     * (t de 0 a 1 ao longo da sílaba). fin = última sílaba: aí o 3º tom desce e sobe; no meio da palavra só desce.
+     * 0 (livre) e 5 (neutro) não têm forma: devolve NaN.
+     */
+    public static double shape(int tone, boolean fin, double t) {
+        return switch (tone) {
+            case 1 -> 3.5;
+            case 2 -> -1.5 + 5.5 * t * t;
+            case 3 -> fin ? (t < 0.55 ? -2 - 4 * (t / 0.55) : -6 + 5 * ((t - 0.55) / 0.45)) : -2 - 4 * Math.min(1, t / 0.7);
+            case 4 -> 4.5 - 9.5 * t;
+            default -> Double.NaN;
+        };
+    }
+
+    /** voiced = quantos quadros (de 10 ms) com voz há no trecho da palavra: ruído que o reconhecedor tomou por palavra não tem nenhum */
+    public record Result(boolean ok, List<SylResult> syls, double medianHz, int voiced) {
         public String summary() {
             StringBuilder b = new StringBuilder();
             for (SylResult s : syls) {
@@ -119,6 +140,7 @@ public final class ToneCheck {
         c = longestRun(fixOctaves(c));
         if (c.length < 5) return null;
         c = smooth(c);
+        F0.curve = c;
         {
             int nn = c.length, qq = Math.max(2, nn / 5), im = 0;
             for (int i = 0; i < Math.max(2, (int) (nn * 0.6)); i++) if (c[i] > c[im]) im = i;
@@ -230,16 +252,16 @@ public final class ToneCheck {
         List<SylResult> res = new ArrayList<>();
         if (n == 0 || med <= 0) {
             for (int i = 0; i < n; i++) res.add(new SylResult(syls.get(i), exp[i], true, "sem voz para medir"));
-            return new Result(true, res, med);
+            return new Result(true, res, med, 0);
         }
         double ref = (refHz > 0 ? refHz : med) * Math.pow(2, REF_UP / 12);
-        int a = -1, b = -1;
+        int a = -1, b = -1, voiced = 0;
         int fa = fromSec >= 0 ? (int) Math.floor(fromSec * 100) : 0, fb = toSec > 0 ? (int) Math.ceil(toSec * 100) : f.length;
         fa = Math.max(0, Math.min(f.length, fa - 5)); fb = Math.max(fa, Math.min(f.length, fb + 5));
-        for (int i = fa; i < fb; i++) if (f[i] > 0) { if (a < 0) a = i; b = i + 1; }
+        for (int i = fa; i < fb; i++) if (f[i] > 0) { if (a < 0) a = i; b = i + 1; voiced++; }
         if (a < 0) {
             for (int i = 0; i < n; i++) res.add(new SylResult(syls.get(i), exp[i], true, "sem voz para medir"));
-            return new Result(true, res, med);
+            return new Result(true, res, med, 0);
         }
         int[][] cuts;
         if (sylSecs != null && sylSecs.length == n) {
@@ -260,9 +282,11 @@ public final class ToneCheck {
             for (int i = s2; i < e2; i++) if (f[i] > 0) seg[cnt++] = f[i];
             Feats F = feats(seg, ref, syls.get(k).base());
             String why = fits(exp[k], F, fin, k + 1 < n && syls.get(k + 1).tone() == 5, tol);
-            res.add(new SylResult(syls.get(k), exp[k], why == null, why == null ? "" : why));
+            double[] curve = F == null ? new double[0] : F.curve.clone();
+            for (int i = 0; i < curve.length; i++) curve[i] += REF_UP;   // de volta para "em relação à voz média"
+            res.add(new SylResult(syls.get(k), exp[k], why == null, why == null ? "" : why, curve));
             if (why != null) all = false;
         }
-        return new Result(all, res, med);
+        return new Result(all, res, med, voiced);
     }
 }

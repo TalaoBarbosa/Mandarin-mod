@@ -1,7 +1,6 @@
 package com.tales.mandarimcraft.client;
 
 import com.google.gson.JsonArray;
-import com.tales.mandarimcraft.MandarimCraft;
 import com.tales.mandarimcraft.Vocab;
 import com.tales.mandarimcraft.core.Counting;
 import com.tales.mandarimcraft.core.Pinyin;
@@ -61,32 +60,30 @@ final class Quantity {
      * (dica se usou 个 no lugar do certo, ou 二 no lugar de 两) e os tons da frase que ele disse, com as regras das quantidades.
      */
     Desafio.Result analyze(float[] audio, boolean spoke, int n, double ref, double tol) {
-        try {
-            Speech.Heard h = Speech.recognize(audio, grammar);
-            String heard = h == null ? "" : h.joined();
-            if (!spoke && heard.isEmpty()) return new Desafio.Result(false, false, false, "", null, null, null);
-            Said s = find(heard);
-            if (s == null || s.n() != n) return new Desafio.Result(true, false, false, heard, null, w, null);
-            Vocab.Alt mw0 = w.mw.get(0);
-            if (s.er()) return new Desafio.Result(true, false, false, heard, null, w, null, "Antes do classificador o 2 é 两 (liǎng), não 二.");
-            if (!s.mwOk()) return new Desafio.Result(true, false, false, heard, null, w, null,
-                    "Para " + w.zh + " o classificador é " + mw0.zh() + " (" + Pinyin.pretty(mw0.py()) + "), não " + s.mw().zh() + ".");
-            String zh = Counting.zhCount(n) + s.mw().zh() + (s.noun() == null ? "" : s.noun().zh());
-            String py = Counting.pyCount(n) + " " + s.mw().py() + (s.noun() == null ? "" : " " + s.noun().py());
-            List<Pinyin.Syl> syls = Pinyin.parse(py);
-            int[] exp = Counting.expected(zh, syls, Counting.syllables(n));
-            double from = -1, to = -1; double[][] secs = null;
-            int[] sp = h == null ? null : Speech.span(h.pieces(), s.joined());
-            if (sp != null) {
-                List<Speech.Piece> ps = h.pieces().subList(sp[0], sp[1]);
-                from = ps.get(0).start(); to = ps.get(ps.size() - 1).end();
-                secs = Speech.perSyllable(ps, syls.size());
-            }
-            ToneCheck.Result tr = ToneCheck.check(audio, from, to, secs, syls, exp, ref, tol);
-            return new Desafio.Result(true, tr.ok(), true, heard, null, w, tr);
-        } catch (Throwable t) {
-            MandarimCraft.LOG.error("Erro analisando a quantidade", t);
-            return new Desafio.Result(true, false, false, "", null, null, null);
+        // aqui só vale a 1ª hipótese: o que se pergunta é o número, e aceitar a 2ª ou a 3ª deixaria passar 十四 por 四十
+        List<Speech.Heard> hs = Speech.recognize(audio, grammar, 1);
+        if (hs == null) throw new IllegalStateException("o reconhecimento de voz não está pronto");
+        Speech.Heard h = hs.isEmpty() ? null : hs.get(0);
+        String heard = h == null ? "" : h.joined();
+        if (!spoke && heard.isEmpty()) return Desafio.Result.silent();
+        Said s = find(heard);
+        if (s == null || s.n() != n) return Desafio.Result.wrong(heard, w);
+        Vocab.Alt mw0 = w.mw.get(0);
+        if (s.er()) return Desafio.Result.tip(heard, w, "Antes do classificador o 2 é 两 (liǎng), não 二.");
+        if (!s.mwOk()) return Desafio.Result.tip(heard, w, "Para " + w.zh + " o classificador é " + mw0.zh() + " (" + Pinyin.pretty(mw0.py()) + "), não " + s.mw().zh() + ".");
+        String zh = Counting.zhCount(n) + s.mw().zh() + (s.noun() == null ? "" : s.noun().zh());
+        String py = Counting.pyCount(n) + " " + s.mw().py() + (s.noun() == null ? "" : " " + s.noun().py());
+        List<Pinyin.Syl> syls = Pinyin.parse(py);
+        int[] exp = Counting.expected(zh, syls, Counting.syllables(n));
+        double from = -1, to = -1; double[][] secs = null;
+        int[] sp = Speech.span(h.pieces(), s.joined());
+        if (sp != null) {
+            List<Speech.Piece> ps = h.pieces().subList(sp[0], sp[1]);
+            from = ps.get(0).start(); to = ps.get(ps.size() - 1).end();
+            secs = Speech.perSyllable(ps, syls.size());
         }
+        ToneCheck.Result tr = ToneCheck.check(audio, from, to, secs, syls, exp, ref, tol);
+        if (tr.voiced() < Speech.MIN_VOICED) return Desafio.Result.wrong("", w);
+        return Desafio.Result.said(heard, null, w, tr);
     }
 }
