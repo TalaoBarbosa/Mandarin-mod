@@ -7,15 +7,20 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.OrderedText;
+import net.minecraft.text.StringVisitable;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+
+import java.util.List;
 
 /**
  * O quadro do desafio no alto da tela, no jeito das dicas de item do Minecraft: fundo escuro translúcido com a borda
  * roxa delas (verde, amarela ou vermelha no resultado), o item grande à esquerda, 汉字 em tamanho dobrado com o pinyin
  * dourado ao lado e o tempo numa barra de chefe que muda de cor quando está acabando. Entra e sai deslizando.
- * No resultado, a curva da voz em cada sílaba aparece desenhada por cima da forma certa do tom.
+ * No resultado, a curva da voz em cada sílaba aparece desenhada por cima do molde do tom, na mesma altura em que foi
+ * julgada (o registro daquela fala): o que se vê é o que valeu.
  */
 public final class Hud {
     private Hud() {}
@@ -106,27 +111,32 @@ public final class Hud {
         long now = System.currentTimeMillis();
 
         TextRenderer tr = mc.textRenderer;
-        boolean listening = st == Desafio.St.LISTEN || st == Desafio.St.CALIBRATE;
+        boolean listening = st == Desafio.St.LISTEN;
         String title = st == Desafio.St.THINK ? Desafio.title + ".".repeat(1 + (int) (now / 350 % 3)) : Desafio.title;
         String zh = Desafio.zh, py = Desafio.py, l1 = Desafio.line1, l2 = Desafio.line2, l3 = Desafio.line3;
         Text zhText = kai(zh, KAI_BIG);
         int zhW = zh.isEmpty() ? 0 : tr.getWidth(zhText), pyW = py.isEmpty() ? 0 : tr.getWidth(py);
-        boolean pyBeside = zhW + 6 + pyW <= 200;   // pinyin ao lado do 汉字 se couber; senão embaixo (a frase da calibração)
+        boolean pyBeside = zhW + 6 + pyW <= 200;   // pinyin ao lado do 汉字 se couber; senão embaixo (as quantidades compridas)
         ToneCheck.Result cv = st == Desafio.St.THINK ? null : Desafio.curves;
         int cvN = cv == null ? 0 : cv.syls().size();
-        String legA = "tom certo", legB = "sua voz";
+        String legA = "molde do tom", legB = "sua voz";
         int cvW = cvN == 0 ? 0 : cvN * (CW + CGAP) + 4 + 11 + Math.max(tr.getWidth(legA), tr.getWidth(legB));
 
+        // a linha que explica os tons pode ser comprida (três sílabas com problema): quebra em vez de sair da tela
+        int sw = ctx.getScaledWindowWidth();
+        List<OrderedText> l2s = l2.isEmpty() ? List.of() : tr.wrapLines(StringVisitable.plain(l2), Math.max(MIN_TEXT, Math.min(300, sw - 70)));
+        int l2W = 0;
+        for (OrderedText t : l2s) l2W = Math.max(l2W, tr.getWidth(t));
+
         // tamanho: a coluna de texto cabe a linha mais comprida; o item fica numa coluna própria à esquerda
-        int textW = Math.max(MIN_TEXT, Math.max(Math.max(tr.getWidth(title), tr.getWidth(l1)), Math.max(tr.getWidth(l2), tr.getWidth(l3))));
+        int textW = Math.max(MIN_TEXT, Math.max(Math.max(tr.getWidth(title), tr.getWidth(l1)), Math.max(l2W, tr.getWidth(l3))));
         textW = Math.max(textW, pyBeside ? zhW + (pyW > 0 ? 6 + pyW : 0) : Math.max(zhW, pyW));
         if (listening) textW = Math.max(textW, BAR);
         textW = Math.max(textW, cvW);
         int textH = 11 + (l1.isEmpty() ? 0 : 11) + (zh.isEmpty() ? 0 : 19 + (!pyBeside && pyW > 0 ? 11 : 0))
                 + (cvN > 0 ? CH + 14 : 0)
-                + (l2.isEmpty() ? 0 : 11) + (l3.isEmpty() ? 0 : 11) + (listening ? 22 : 0) - 2;
+                + l2s.size() * 11 + (l3.isEmpty() ? 0 : 11) + (listening ? 22 : 0) - 2;
         boolean hasIcon = !Desafio.icon.isEmpty();
-        int sw = ctx.getScaledWindowWidth();
         int w = Math.min(sw - 8, PAD + (hasIcon ? ICON + GAP : 2) + textW + PAD);
         int h = PAD + Math.max(textH, hasIcon ? ICON : 0) + PAD;
         int x = (sw - w) / 2;
@@ -156,7 +166,7 @@ public final class Hud {
             if (pyW > 0 && !pyBeside) { ctx.drawTextWithShadow(tr, py, tx, ty, GOLD); ty += 11; }
         }
         if (cvN > 0) {
-            for (int i = 0; i < cvN; i++) curve(ctx, tr, tx + i * (CW + CGAP), ty + 1, cv.syls().get(i), i == cvN - 1);
+            for (int i = 0; i < cvN; i++) curve(ctx, tr, tx + i * (CW + CGAP), ty + 1, cv.syls().get(i), ToneCheck.pos(i, cvN));
             int lx = tx + cvN * (CW + CGAP) + 4;
             ctx.fill(lx, ty + 6, lx + 8, ty + 7, SHAPE);
             ctx.drawTextWithShadow(tr, legA, lx + 11, ty + 2, DARK);
@@ -164,7 +174,7 @@ public final class Hud {
             ctx.drawTextWithShadow(tr, legB, lx + 11, ty + 13, GRAY);
             ty += CH + 14;
         }
-        if (!l2.isEmpty()) { ctx.drawTextWithShadow(tr, l2, tx, ty, GRAY); ty += 11; }
+        for (OrderedText t : l2s) { ctx.drawTextWithShadow(tr, t, tx, ty, GRAY); ty += 11; }
         if (!l3.isEmpty()) { ctx.drawTextWithShadow(tr, l3, tx, ty, DARK); ty += 11; }
 
         if (listening) {
@@ -182,7 +192,7 @@ public final class Hud {
         MinecraftClient mc = MinecraftClient.getInstance();
         TextRenderer tr = mc.textRenderer;
         long now = System.currentTimeMillis();
-        boolean listening = st == Desafio.St.LISTEN || st == Desafio.St.CALIBRATE;
+        boolean listening = st == Desafio.St.LISTEN;
         // no resultado o nome vem na cor dele (verde, amarelo, vermelho); "Analisando…" substitui o tempo
         String name = Desafio.line1.isEmpty() ? Desafio.title : Desafio.line1;
         String right = listening ? secondsLeft(now) : st == Desafio.St.THINK ? "…" : "";
@@ -209,22 +219,22 @@ public final class Hud {
     }
 
     /**
-     * O tom de uma sílaba: a forma certa em cinza e, por cima, a voz do jogador (verde se passou, vermelha se não).
-     * A linha pontilhada do meio é a altura média da voz dele; a caixa vai de 8 semitons abaixo a 7 acima dela.
+     * O tom de uma sílaba: o molde do tom em cinza e, por cima, a voz do jogador: verde = certo, amarela = aceito mas
+     * não saiu limpo, vermelha = errado, cinza = não conferido (neutro) ou sem voz para medir.
+     * A linha pontilhada do meio é o registro daquela fala; a caixa vai de 8 semitons abaixo a 7 acima dele.
      */
-    private static void curve(DrawContext ctx, TextRenderer tr, int x, int y, ToneCheck.SylResult s, boolean fin) {
+    private static void curve(DrawContext ctx, TextRenderer tr, int x, int y, ToneCheck.SylResult s, int pos) {
         ctx.fill(x, y, x + CW, y + CH, 0x90000000);   // fundo escuro: as duas linhas têm que aparecer com qualquer paisagem atrás
         int mid = y + row(0);
         for (int i = 1; i < CW - 1; i += 3) ctx.fill(x + i, mid, x + i + 1, mid + 1, 0x40FFFFFF);
-        boolean checked = s.expected() >= 1 && s.expected() <= 4;
         int prev = -1;
-        if (checked) for (int i = 2; i < CW - 2; i++) {
-            int r = y + row(ToneCheck.shape(s.expected(), fin, (i - 2) / (double) (CW - 5)));
+        if (s.checked()) for (int i = 2; i < CW - 2; i++) {
+            int r = y + row(ToneCheck.shape(s.expected(), pos, (i - 2) / (double) (CW - 5)));
             stroke(ctx, x + i, prev < 0 ? r : prev, r, 1, SHAPE);
             prev = r;
         }
         double[] c = s.curve();
-        int color = !checked ? GRAY : s.ok() ? GREEN : RED;
+        int color = switch (s.grade()) { case GOOD -> GREEN; case ROUGH -> YELLOW; case BAD -> RED; default -> GRAY; };
         prev = -1;
         if (c.length >= 2) for (int i = 2; i < CW - 2; i++) {
             double p = (i - 2) / (double) (CW - 5) * (c.length - 1);
@@ -234,11 +244,11 @@ public final class Hud {
             stroke(ctx, x + i, prev < 0 ? r : prev, r, 2, color);
             prev = r;
         }
-        String name = Pinyin.mark(s.syl().base(), s.syl().tone());
+        String name = Pinyin.mark(s.syl().base(), s.syl().tone()) + (s.unmeasured() ? " ?" : "");
         ctx.drawTextWithShadow(tr, name, x + (CW - tr.getWidth(name)) / 2, y + CH + 2, color);
     }
 
-    /** semitons em relação à voz média → linha dentro da caixinha (em cima = agudo) */
+    /** semitons em relação ao registro da fala → linha dentro da caixinha (em cima = agudo) */
     private static int row(double st) {
         double v = Math.max(-8, Math.min(7, st));
         return 1 + (int) Math.round((7 - v) / 15.0 * (CH - 4));
@@ -253,12 +263,11 @@ public final class Hud {
         return (Math.max(0, Desafio.deadline - now) + 999) / 1000 + " s";
     }
 
-    /** tempo numa barra de chefe azul → amarela → vermelha (rosa na calibração); volume do microfone numa linha fina embaixo */
+    /** tempo numa barra de chefe azul → amarela → vermelha; volume do microfone numa linha fina embaixo */
     private static void bars(DrawContext ctx, int x, int y, int width, long now) {
-        boolean cal = Desafio.state == Desafio.St.CALIBRATE;
         long total = Math.max(1, Desafio.total);
         float frac = Math.min(1f, (float) Math.max(0, Desafio.deadline - now) / total);
-        int c = cal ? 3 : frac > 0.4f ? 0 : frac > 0.2f ? 1 : 2;
+        int c = frac > 0.4f ? 0 : frac > 0.2f ? 1 : 2;
         int bw = Math.min(BAR, width);   // a textura tem 182 de largura: mais curta, corta a ponta direita
         ctx.drawGuiTexture(BAR_BG[c], BAR, 5, 0, 0, x, y, bw, 5);
         int fill = Math.round(bw * frac);

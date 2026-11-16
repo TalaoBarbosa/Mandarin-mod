@@ -6,8 +6,21 @@ import java.util.List;
 
 /**
  * Confere se cada sílaba saiu no tom esperado, pela curva da voz.
- * Regra: leniente com o tom certo e rígida só com o que está claramente errado (2º que vira 3º, 4º que sobe…).
- * Testado com as gravações humanas do app: ~96% das sílabas certas passam e ~94% das trocas de tom são pegas.
+ *
+ * Não depende de quão agudo ou grave a pessoa falou (nem de calibração): no jogo a mesma pessoa fala uma palavra
+ * gritando e a seguinte baixinho, e a altura média muda mais de uma oitava de uma tentativa para a outra. O que vale é
+ *  - a FORMA da curva de cada sílaba (reta, sobe, desce e sobe, cai), comparada com moldes medidos em gravações de
+ *    nativos, cada molde colocado na altura que melhor encaixa;
+ *  - a ALTURA de cada sílaba em relação às outras da mesma palavra: o "registro" da fala sai das sílabas cuja forma
+ *    bate com o tom pedido (as âncoras), e as regras de altura são aplicadas em volta dele.
+ * Palavra de uma sílaba só tem forma: vale o molde que encaixa melhor.
+ *
+ * Medido nas 230 gravações de nativos do mod (falas certas que passam / trocas de tom que são pegas):
+ *   uma sílaba 98% / 96%; sílaba + neutro 96% / 66%; duas ou mais sílabas com tom 84% / 80%; todas 90% / 80%.
+ *   (Das 115 palavras, 49 são montadas com a gravação de cada caractere, e nelas a altura de uma sílaba em relação
+ *   à outra é artificial: das 66 gravadas inteiras, 94% passam.)
+ * As regras antigas, que comparavam com a altura da calibração, davam 96% / 78% com a calibração perfeita, mas
+ * 79–84% / 72–75% com a voz 4 semitons fora dela, que é o caso de quem joga.
  */
 public final class ToneCheck {
     private ToneCheck() {}
@@ -21,33 +34,65 @@ public final class ToneCheck {
         public double[] curve;
     }
 
-    /** curve = a voz nesta sílaba, em semitons acima ou abaixo da altura média do jogador (vazia se não deu para medir) */
-    public record SylResult(Pinyin.Syl syl, int expected, boolean ok, String why, double[] curve) {
-        public SylResult(Pinyin.Syl syl, int expected, boolean ok, String why) { this(syl, expected, ok, why, new double[0]); }
+    /** NONE = não conferido (neutro, livre) ou sem voz para medir; BAD = errado; ROUGH = aceito, mas não saiu limpo; GOOD = certo */
+    public enum Grade { NONE, BAD, ROUGH, GOOD }
+
+    /**
+     * Uma sílaba.
+     * curve = a voz, em semitons acima ou abaixo do registro da palavra (vazia se não deu para medir);
+     * shape = quanto a curva foge do molde do tom pedido (desvio em semitons, com o molde na melhor altura);
+     * rival / rivalShape = o outro tom cujo molde encaixa melhor, e quanto foge dele;
+     * height = quanto a sílaba ficou acima (+) ou abaixo (−) de onde devia, em relação às outras sílabas.
+     */
+    public record SylResult(Pinyin.Syl syl, int expected, Grade grade, String why, double[] curve, double shape, int rival, double rivalShape, double height) {
+        public boolean ok() { return grade != Grade.BAD; }
+        /** conferida (tom 1 a 4) mas sem voz bastante para medir */
+        public boolean unmeasured() { return expected >= 1 && expected <= 4 && grade == Grade.NONE; }
+        public boolean checked() { return expected >= 1 && expected <= 4; }
     }
 
     /**
-     * A forma de cada tom para desenhar ao lado da voz do jogador, em semitons em relação à altura média dele
-     * (t de 0 a 1 ao longo da sílaba). fin = última sílaba: aí o 3º tom desce e sobe; no meio da palavra só desce.
-     * 0 (livre) e 5 (neutro) não têm forma: devolve NaN.
+     * voiced = quantos quadros (de 10 ms) com voz há no trecho da palavra: ruído que o reconhecedor tomou por palavra não tem nenhum;
+     * checked / measured = quantas sílabas têm tom para conferir, e em quantas deu para medir a voz.
      */
-    public static double shape(int tone, boolean fin, double t) {
-        return switch (tone) {
-            case 1 -> 3.5;
-            case 2 -> -1.5 + 5.5 * t * t;
-            case 3 -> fin ? (t < 0.55 ? -2 - 4 * (t / 0.55) : -6 + 5 * ((t - 0.55) / 0.45)) : -2 - 4 * Math.min(1, t / 0.7);
-            case 4 -> 4.5 - 9.5 * t;
-            default -> Double.NaN;
-        };
-    }
-
-    /** voiced = quantos quadros (de 10 ms) com voz há no trecho da palavra: ruído que o reconhecedor tomou por palavra não tem nenhum */
-    public record Result(boolean ok, List<SylResult> syls, double medianHz, int voiced) {
+    public record Result(boolean ok, List<SylResult> syls, double medianHz, int voiced, int checked, int measured) {
         public String summary() {
             StringBuilder b = new StringBuilder();
             for (SylResult s : syls) {
                 if (b.length() > 0) b.append("  ");
-                b.append(Pinyin.mark(s.syl().base(), s.syl().tone())).append(s.ok() ? " ✓" : " ✗ " + s.why());
+                b.append(Pinyin.mark(s.syl().base(), s.syl().tone()));
+                b.append(switch (s.grade()) {
+                    case BAD -> " ✗ " + s.why();
+                    case ROUGH -> " ✓ raspando (" + s.why() + ")";
+                    case GOOD -> " ✓";
+                    case NONE -> s.unmeasured() ? " ? sem medida" : "";
+                });
+            }
+            return b.toString();
+        }
+
+        /** só o que não saiu limpo, para a tela (o desenho já mostra o resto): "bǎn ✗ subiu (como 2º tom)" */
+        public String problems() {
+            StringBuilder b = new StringBuilder();
+            for (SylResult s : syls) {
+                if (s.grade() == Grade.GOOD || !s.checked()) continue;
+                if (b.length() > 0) b.append("  ");
+                b.append(Pinyin.mark(s.syl().base(), s.syl().tone()));
+                b.append(switch (s.grade()) { case BAD -> " ✗ " + s.why(); case ROUGH -> " passou raspando: " + s.why(); default -> " ? não deu para medir"; });
+            }
+            return b.toString();
+        }
+
+        /** os números de cada sílaba conferida, para o log */
+        public String detail() {
+            StringBuilder b = new StringBuilder();
+            for (SylResult s : syls) {
+                if (!s.checked()) continue;
+                if (b.length() > 0) b.append("; ");
+                b.append(Pinyin.mark(s.syl().base(), s.syl().tone()));
+                if (s.unmeasured()) { b.append(" sem medida"); continue; }
+                b.append(String.format(java.util.Locale.ROOT, " forma %.1f (tom %d: %.1f) altura %+.1f, %d pontos, de %+.1f a %+.1f",
+                        s.shape(), s.rival(), s.rivalShape(), s.height(), s.curve().length, s.curve().length > 0 ? s.curve()[0] : 0, s.curve().length > 0 ? s.curve()[s.curve().length - 1] : 0));
             }
             return b.toString();
         }
@@ -55,37 +100,91 @@ public final class ToneCheck {
 
     static double st(double hz, double ref) { return 12 * Math.log(hz / ref) / Math.log(2); }
 
+    // ------------------------------------------------------------ moldes
+
+    /** pontos de cada molde */
+    static final int P = 9;
     /**
-     * Os limites abaixo funcionam melhor com a referência 2 semitons acima da altura média da voz. Medido com as 115
-     * gravações do mod: com a média, 88% das palavras ditas certo passam; com +2, 97% (e pega um pouco mais de tom
-     * errado). Referência baixa é o pior caso (-3: 77%): o 3º tom vira "caiu do alto" ou "não ficou baixo".
+     * A curva média de cada tom nas gravações de nativos, em semitons em relação ao registro da palavra:
+     * MOLD[tom][posição][ponto], posição 0 = palavra de uma sílaba, 1 = última sílaba, 2 = sílaba do meio.
+     * O 2º tom começa baixo e só sobe na segunda metade; o 3º desce e sobe; o 4º do fim da palavra cai menos.
      */
-    public static final double REF_UP = 2.0;
+    static final double[][][] MOLD = {
+            {},
+            {{4.3, 4.1, 4.0, 4.0, 4.0, 4.0, 3.8, 3.7, 3.9}, {3.9, 4.0, 4.0, 4.0, 4.0, 3.9, 3.9, 4.0, 4.1}, {2.8, 2.6, 2.6, 2.5, 2.5, 2.5, 2.4, 2.2, 2.0}},
+            {{-4.0, -4.3, -4.4, -4.1, -3.4, -1.9, 0.4, 2.4, 3.6}, {-2.7, -3.7, -3.9, -3.7, -3.2, -2.0, -0.5, 1.3, 2.6}, {-2.8, -3.0, -2.9, -2.6, -2.0, -1.1, 0.3, 1.9, 3.1}},
+            {{-2.5, -3.9, -4.7, -5.4, -5.9, -5.6, -4.2, -1.4, 0.0}, {-2.4, -3.8, -5.0, -5.4, -5.5, -5.0, -3.8, -1.9, -0.8}, {-1.9, -3.0, -3.9, -4.5, -5.0, -4.8, -4.0, -2.8, -2.2}},
+            {{4.2, 3.9, 3.4, 2.4, 1.5, 0.2, -0.9, -1.4, -1.9}, {2.4, 2.3, 2.5, 2.4, 2.0, 1.3, 0.3, -0.6, -1.4}, {4.8, 4.3, 3.6, 2.7, 1.3, 0.1, -1.2, -2.1, -2.7}},
+    };
+
+    /** posição da sílaba k numa palavra de n: 0 = sozinha, 1 = a última, 2 = no meio */
+    public static int pos(int k, int n) { return n == 1 ? 0 : k == n - 1 ? 1 : 2; }
 
     /**
-     * Junta as alturas medidas nas frases da calibração: descarta a que ficou longe das outras (microfone mexido, ruído,
-     * erro de oitava) e tira a média em escala log. 0 = nenhuma serviu.
+     * O molde de um tom para desenhar ao lado da voz do jogador, em semitons em relação ao registro da palavra
+     * (t de 0 a 1 ao longo da sílaba). 0 (livre) e 5 (neutro) não têm molde: devolve NaN.
      */
-    public static double voiceCenter(double... hz) {
-        boolean[] in = calUsed(hz);
-        double sum = 0;
-        int n = 0;
-        for (int i = 0; i < hz.length; i++) if (in[i]) { sum += Math.log(hz[i]); n++; }
-        return n == 0 ? 0 : Math.exp(sum / n);
+    public static double shape(int tone, int pos, double t) {
+        if (tone < 1 || tone > 4) return Double.NaN;
+        double x = Math.max(0, Math.min(1, t)) * (P - 1);
+        int a = Math.min(P - 2, (int) x);
+        double[] m = MOLD[tone][pos];
+        return m[a] + (m[a + 1] - m[a]) * (x - a);
     }
 
-    /** quais frases da calibração entram na conta: as que ficaram perto da do meio (a mediana sempre entra) */
-    public static boolean[] calUsed(double... hz) {
-        double[] s = Arrays.stream(hz).filter(x -> x > 0).sorted().toArray();
-        boolean[] in = new boolean[hz.length];
-        if (s.length == 0) return in;
-        double mid = s[s.length / 2];
-        for (int i = 0; i < hz.length; i++) in[i] = hz[i] > 0 && Math.abs(st(hz[i], mid)) <= CAL_SPREAD;
-        return in;
+    static double[] resample(double[] c, int p) {
+        double[] o = new double[p];
+        for (int i = 0; i < p; i++) {
+            double x = i / (double) (p - 1) * (c.length - 1);
+            int a = (int) x;
+            o[i] = a + 1 < c.length ? c[a] + (c[a + 1] - c[a]) * (x - a) : c[c.length - 1];
+        }
+        return o;
     }
 
-    /** quanto uma frase da calibração pode se afastar da do meio (em semitons) e ainda contar */
-    public static final double CAL_SPREAD = 2.5;
+    /** encaixa o molde do tom na curva (P pontos): devolve {a altura que melhor encaixa, o desvio que sobra} */
+    static double[] fit(double[] c, int tone, int pos) {
+        double[] m = MOLD[tone][pos];
+        double off = 0;
+        for (int i = 0; i < P; i++) off += c[i] - m[i];
+        off /= P;
+        double s = 0;
+        for (int i = 0; i < P; i++) { double x = c[i] - m[i] - off; s += x * x; }
+        return new double[]{off, Math.sqrt(s / P)};
+    }
+
+    static double median(double[] v) {
+        double[] a = v.clone();
+        Arrays.sort(a);
+        return a.length % 2 == 1 ? a[a.length / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+    }
+
+    private static String like(int tone) {
+        return switch (tone) {
+            case 1 -> "ficou reto (como 1º tom)";
+            case 2 -> "subiu (como 2º tom)";
+            case 3 -> "desceu e subiu (como 3º tom)";
+            default -> "caiu (como 4º tom)";
+        };
+    }
+
+    /** palavra de uma sílaba: o molde pedido pode fugir da curva até isto a mais que o melhor dos outros três */
+    static final double SINGLE_MARGIN = 0.6;
+    /** com outras sílabas: uma sílaba cuja forma está até isto do melhor molde serve de âncora do registro */
+    static final double ANCHOR_MARGIN = 0.8;
+    /** com outras sílabas: passou nas regras, mas outro molde encaixa melhor por mais que isto: não vale */
+    static final double VETO = 2.0;
+    /** as regras de altura (fits) foram ajustadas com a referência um pouco acima do registro */
+    static final double UP = 1.0;
+    /** passou, mas outro molde encaixa melhor por mais que isto: "raspando" */
+    static final double ROUGH_MARGIN = 0.3;
+    /**
+     * com outras sílabas: a sílaba pode ficar até isto (semitons) acima ou abaixo de onde devia em relação às outras.
+     * Entre 3,5 e 5 os mesmos nativos passam; com 3,5 mais trocas são pegas.
+     */
+    static final double HEIGHT_MAX = 3.5;
+    /** passou, mas ficou mais que isto fora da altura: "raspando" */
+    static final double ROUGH_HEIGHT = 2.5;
 
     /** corrige pedaços uma oitava acima ou abaixo do pedaço principal (erro típico de detecção de altura) */
     static double[] fixOctaves(double[] c) {
@@ -231,37 +330,39 @@ public final class ToneCheck {
     /**
      * Confere os tons de uma palavra falada.
      * @param pcm áudio 16 kHz; @param fromSec/toSec trecho da palavra (do reconhecedor; use -1 para usar todo o trecho com voz)
-     * @param refHz altura média da voz do jogador (calibração + falas aceitas; 0 = usa a desta fala). A conta usa REF_UP acima dela.
+     * @param tol 1 = rígido; maior deixa mais leniente
      */
-    public static Result check(float[] pcm, double fromSec, double toSec, String hanzi, String py, double refHz, double tol) {
-        return check(pcm, fromSec, toSec, null, hanzi, py, refHz, tol);
+    public static Result check(float[] pcm, double fromSec, double toSec, String hanzi, String py, double tol) {
+        return check(pcm, fromSec, toSec, null, hanzi, py, tol);
     }
 
     /** @param sylSecs início e fim de cada sílaba em segundos (do reconhecedor, quando ele separa caractere por caractere); null = acha sozinho */
-    public static Result check(float[] pcm, double fromSec, double toSec, double[][] sylSecs, String hanzi, String py, double refHz, double tol) {
+    public static Result check(float[] pcm, double fromSec, double toSec, double[][] sylSecs, String hanzi, String py, double tol) {
         List<Pinyin.Syl> syls = Pinyin.parse(py);
-        return check(pcm, fromSec, toSec, sylSecs, syls, Pinyin.expected(hanzi, syls), refHz, tol);
+        return check(pcm, fromSec, toSec, sylSecs, syls, Pinyin.expected(hanzi, syls), tol);
     }
 
     /** com os tons esperados já calculados (as quantidades têm regras próprias: veja Counting.expected) */
-    public static Result check(float[] pcm, double fromSec, double toSec, double[][] sylSecs, List<Pinyin.Syl> syls, int[] exp, double refHz, double tol) {
+    public static Result check(float[] pcm, double fromSec, double toSec, double[][] sylSecs, List<Pinyin.Syl> syls, int[] exp, double tol) {
         Pitch.Track tr = Pitch.yin(pcm);
-        double[] f = Pitch.clean(tr);
-        int n = syls.size();
+        return check(Pitch.clean(tr), tr.rms, fromSec, toSec, sylSecs, syls, exp, tol);
+    }
+
+    /** a mesma conta a partir da altura já medida (f = Hz por quadro de 10 ms, 0 onde não há voz) */
+    public static Result check(double[] f, double[] rms, double fromSec, double toSec, double[][] sylSecs, List<Pinyin.Syl> syls, int[] exp, double tol) {
+        int n = syls.size(), checked = 0;
+        for (int e : exp) if (e >= 1 && e <= 4) checked++;
         double med = Pitch.median(f);
         List<SylResult> res = new ArrayList<>();
-        if (n == 0 || med <= 0) {
-            for (int i = 0; i < n; i++) res.add(new SylResult(syls.get(i), exp[i], true, "sem voz para medir"));
-            return new Result(true, res, med, 0);
-        }
-        double ref = (refHz > 0 ? refHz : med) * Math.pow(2, REF_UP / 12);
         int a = -1, b = -1, voiced = 0;
-        int fa = fromSec >= 0 ? (int) Math.floor(fromSec * 100) : 0, fb = toSec > 0 ? (int) Math.ceil(toSec * 100) : f.length;
-        fa = Math.max(0, Math.min(f.length, fa - 5)); fb = Math.max(fa, Math.min(f.length, fb + 5));
-        for (int i = fa; i < fb; i++) if (f[i] > 0) { if (a < 0) a = i; b = i + 1; voiced++; }
-        if (a < 0) {
-            for (int i = 0; i < n; i++) res.add(new SylResult(syls.get(i), exp[i], true, "sem voz para medir"));
-            return new Result(true, res, med, 0);
+        if (n > 0 && med > 0) {
+            int fa = fromSec >= 0 ? (int) Math.floor(fromSec * 100) : 0, fb = toSec > 0 ? (int) Math.ceil(toSec * 100) : f.length;
+            fa = Math.max(0, Math.min(f.length, fa - 5)); fb = Math.max(fa, Math.min(f.length, fb + 5));
+            for (int i = fa; i < fb; i++) if (f[i] > 0) { if (a < 0) a = i; b = i + 1; voiced++; }
+        }
+        if (a < 0) {   // nenhuma voz no trecho: nada foi conferido (quem chama decide o que fazer com isso)
+            for (int i = 0; i < n; i++) res.add(new SylResult(syls.get(i), exp[i], Grade.NONE, "", new double[0], 0, 0, 0, 0));
+            return new Result(true, res, med, 0, checked, 0);
         }
         int[][] cuts;
         if (sylSecs != null && sylSecs.length == n) {
@@ -270,23 +371,65 @@ public final class ToneCheck {
                 cuts[k][0] = Math.max(0, Math.min(f.length - 1, (int) Math.floor(sylSecs[k][0] * 100)));
                 cuts[k][1] = Math.max(cuts[k][0] + 1, Math.min(f.length, (int) Math.ceil(sylSecs[k][1] * 100)));
             }
-        } else cuts = smartCuts(f, tr.rms, n, a, b);
-        boolean all = true;
+        } else cuts = smartCuts(f, rms, n, a, b);
+
+        // 1) a curva de cada sílaba (em semitons sobre a mediana da fala) e como cada molde encaixa nela
+        double[][] seg = new double[n][], curve = new double[n][];
+        double[] off = new double[n], mine = new double[n], rivalFit = new double[n];
+        int[] rival = new int[n];
+        boolean[] has = new boolean[n];
+        int measured = 0;
         for (int k = 0; k < n; k++) {
             boolean fin = k == n - 1;
             int s = cuts[k][0], e = cuts[k][1], L = e - s;
             int s2 = s + (int) (L * 0.12), e2 = e - (fin ? 0 : (int) (L * 0.15));
             int cnt = 0;
             for (int i = s2; i < e2; i++) if (f[i] > 0) cnt++;
-            double[] seg = new double[cnt]; cnt = 0;
-            for (int i = s2; i < e2; i++) if (f[i] > 0) seg[cnt++] = f[i];
-            Feats F = feats(seg, ref, syls.get(k).base());
-            String why = fits(exp[k], F, fin, k + 1 < n && syls.get(k + 1).tone() == 5, tol);
-            double[] curve = F == null ? new double[0] : F.curve.clone();
-            for (int i = 0; i < curve.length; i++) curve[i] += REF_UP;   // de volta para "em relação à voz média"
-            res.add(new SylResult(syls.get(k), exp[k], why == null, why == null ? "" : why, curve));
-            if (why != null) all = false;
+            seg[k] = new double[cnt]; cnt = 0;
+            for (int i = s2; i < e2; i++) if (f[i] > 0) seg[k][cnt++] = f[i];
+            Feats F = feats(seg[k], med, syls.get(k).base());
+            curve[k] = F == null ? new double[0] : F.curve;
+            if (F == null || exp[k] < 1 || exp[k] > 4) continue;
+            double[] c = resample(F.curve, P);
+            rivalFit[k] = Double.MAX_VALUE;
+            for (int t = 1; t <= 4; t++) {
+                double[] ft = fit(c, t, pos(k, n));
+                if (t == exp[k]) { off[k] = ft[0]; mine[k] = ft[1]; }
+                else if (ft[1] < rivalFit[k]) { rivalFit[k] = ft[1]; rival[k] = t; }
+            }
+            has[k] = true; measured++;
         }
-        return new Result(all, res, med, voiced);
+
+        // 2) o registro da fala: a altura que põe os moldes das âncoras em cima das curvas delas
+        int anchors = 0;
+        double[] votes = new double[measured];
+        for (int k = 0, i = 0; k < n; k++) if (has[k] && mine[k] - rivalFit[k] <= ANCHOR_MARGIN * tol) { votes[i++] = off[k]; anchors++; }
+        if (anchors == 0) for (int k = 0, i = 0; k < n; k++) if (has[k]) { votes[i++] = off[k]; anchors++; }   // nenhuma forma bate: vale a de todas
+        double reg = anchors == 0 ? 0 : median(Arrays.copyOf(votes, anchors));
+        double ref = med * Math.pow(2, (reg + UP) / 12);
+
+        // 3) o veredito de cada sílaba
+        boolean all = true;
+        for (int k = 0; k < n; k++) {
+            double[] c = curve[k].clone();
+            for (int i = 0; i < c.length; i++) c[i] -= reg;   // para desenhar: em relação ao registro da palavra
+            if (!has[k]) { res.add(new SylResult(syls.get(k), exp[k], Grade.NONE, "", c, 0, 0, 0, 0)); continue; }
+            double gap = mine[k] - rivalFit[k];
+            String why;
+            if (n == 1) why = gap > SINGLE_MARGIN * tol ? like(rival[k]) : null;
+            else {
+                why = fits(exp[k], feats(seg[k], ref, syls.get(k).base()), k == n - 1, k + 1 < n && syls.get(k + 1).tone() == 5, tol);
+                if (why == null && gap > VETO * tol) why = like(rival[k]);
+                double up = off[k] - reg;
+                if (why == null && measured >= 2 && Math.abs(up) > HEIGHT_MAX * tol) why = up < 0 ? "ficou baixo perto das outras sílabas" : "ficou alto perto das outras sílabas";
+            }
+            double h = off[k] - reg;
+            boolean roughShape = gap > ROUGH_MARGIN, roughHeight = n > 1 && measured >= 2 && Math.abs(h) > ROUGH_HEIGHT;
+            Grade g = why != null ? Grade.BAD : roughShape || roughHeight ? Grade.ROUGH : Grade.GOOD;
+            if (g == Grade.ROUGH) why = roughShape ? "quase " + like(rival[k]) : h < 0 ? "um pouco baixo perto das outras sílabas" : "um pouco alto perto das outras sílabas";
+            res.add(new SylResult(syls.get(k), exp[k], g, why == null ? "" : why, c, mine[k], rival[k], rivalFit[k], off[k] - reg));
+            if (g == Grade.BAD) all = false;
+        }
+        return new Result(all, res, med, voiced, checked, measured);
     }
 }

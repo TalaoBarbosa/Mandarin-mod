@@ -59,7 +59,7 @@ final class Quantity {
      * "Quantos você tem?": reconhece com a gramática só desta pergunta e confere o número, o classificador
      * (dica se usou 个 no lugar do certo, ou 二 no lugar de 两) e os tons da frase que ele disse, com as regras das quantidades.
      */
-    Desafio.Result analyze(float[] audio, boolean spoke, int n, double ref, double tol) {
+    Desafio.Result analyze(float[] audio, boolean spoke, int n, double tol) {
         // aqui só vale a 1ª hipótese: o que se pergunta é o número, e aceitar a 2ª ou a 3ª deixaria passar 十四 por 四十
         List<Speech.Heard> hs = Speech.recognize(audio, grammar, 1);
         if (hs == null) throw new IllegalStateException("o reconhecimento de voz não está pronto");
@@ -82,7 +82,7 @@ final class Quantity {
             from = ps.get(0).start(); to = ps.get(ps.size() - 1).end();
             secs = Speech.perSyllable(ps, syls.size());
         }
-        ToneCheck.Result tr = ToneCheck.check(audio, from, to, secs, syls, exp, ref, tol);
+        ToneCheck.Result tr = ToneCheck.check(audio, from, to, secs, syls, exp, tol);
         if (tr.voiced() < Speech.MIN_VOICED) return Desafio.Result.wrong("", w);
         return Desafio.Result.said(heard, null, w, tr);
     }

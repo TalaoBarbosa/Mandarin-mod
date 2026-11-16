@@ -4,6 +4,7 @@ import com.tales.mandarimcraft.MandarimCraft;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.CyclingButtonWidget;
 import net.minecraft.client.gui.widget.SliderWidget;
@@ -13,8 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tela de ajustes (/hanyu ajustes, ou pelo dicionário): escolher o microfone vendo o volume ao vivo, calibrar a voz e
- * mudar o que antes só dava por comando. Enquanto ela está aberta nenhum desafio começa.
+ * Tela de ajustes (/hanyu ajustes, ou pelo dicionário): escolher o microfone vendo o volume ao vivo, treinar, guardar
+ * as gravações e mudar o que antes só dava por comando. Enquanto ela está aberta nenhum desafio começa.
  */
 public class AjustesScreen extends Screen {
     private static final int W = 310, ROW = 24;
@@ -54,8 +55,10 @@ public class AjustesScreen extends Screen {
                 .build(x, y, W, 20, Text.literal("Microfone"), (b, v) -> { k.mic = v; k.save(); if (Desafio.state == Desafio.St.IDLE) Desafio.MIC.start(); }));
         y += ROW + 16;   // o volume ao vivo é desenhado neste espaço
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Calibrar a voz (3 frases)"), b -> { client.setScreen(null); Desafio.startCalibration(); }).dimensions(x, y, half, 20).build());
-        addDrawableChild(ButtonWidget.builder(Text.literal("Treino (não perde nada)"), b -> { client.setScreen(null); Desafio.startPractice(); }).dimensions(x + half + 6, y, half, 20).build());
+        addDrawableChild(ButtonWidget.builder(Text.literal("Treino (não perde nada)"), b -> { client.setScreen(null); Desafio.startPractice(); }).dimensions(x, y, half, 20).build());
+        addDrawableChild(CyclingButtonWidget.onOffBuilder(Text.literal("sim"), Text.literal("não")).initially(k.saveAudio)
+                .tooltip(v -> Tooltip.of(Text.literal("Guarda o áudio de cada tentativa (as " + Gravacoes.KEEP + " últimas) na pasta do jogo, em mandarimcraft-gravacoes: dá para ouvir o que o mod ouviu e mandar junto com o log para ajustar os tons à sua voz.")))
+                .build(x + half + 6, y, half, 20, Text.literal("Guardar gravações"), (b, v) -> k.saveAudio = v));
         y += ROW + 6;
 
         addDrawableChild(CyclingButtonWidget.<String>builder(v -> Text.literal(switch (v) { case "rigido" -> "rígido"; default -> v; }))
@@ -100,7 +103,7 @@ public class AjustesScreen extends Screen {
         int x = (width - W) / 2;
         ctx.drawCenteredTextWithShadow(textRenderer, title, width / 2, Math.max(8, micY - 24), 0xFFFFFF);
         String ver = FabricLoader.getInstance().getModContainer(MandarimCraft.MOD_ID).map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("?");
-        ctx.drawCenteredTextWithShadow(textRenderer, Text.literal("voz " + (k.refHz > 0 ? Math.round(k.refHz) + " Hz" : "não calibrada") + " · reconhecimento: " + Speech.status() + " · versão " + ver),
+        ctx.drawCenteredTextWithShadow(textRenderer, Text.literal("reconhecimento: " + Speech.status() + " · versão " + ver),
                 width / 2, Math.max(19, micY - 12), Hud.DARK);
 
         // volume ao vivo do microfone escolhido

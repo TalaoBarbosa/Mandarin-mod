@@ -3,7 +3,8 @@
 Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando um item novo entra no inventário, você tem alguns segundos para dizer o nome dele em mandarim, com os tons certos.** Acertou, fica com o item. Errou, o item some, você ouve a pronúncia e tenta de novo quando pegar outro.
 
 - O reconhecimento de voz roda **no seu computador, sem internet** (Vosk, modelo chinês).
-- Os **tons são conferidos pela curva da voz**: 2º tom que vira 3º, 4º que não cai etc. No resultado o mod **desenha a curva da sua voz** em cada sílaba por cima da forma certa do tom.
+- Os **tons são conferidos pela curva da voz**: 2º tom que vira 3º, 4º que não cai etc. Vale a **forma** da curva de cada sílaba e a **altura de uma sílaba em relação às outras** da mesma palavra, não se você falou agudo, grave, alto ou baixo: não precisa calibrar nada.
+- No resultado o mod **desenha a curva da sua voz** em cada sílaba por cima do molde do tom (tirado de gravações de nativos): verde = certo, amarelo = passou raspando, vermelho = errado, cinza com `?` = não deu para medir. O desenho é exatamente o que foi julgado.
 - O reconhecedor **leva o contexto em conta**, como quem ouve já esperando a resposta: a palavra que o jogo pediu pesa mais, e ela vale se estiver entre as 3 melhores hipóteses. Com gravações de nativos, 96–98% das palavras ditas certo passam nas sílabas (eram 90–94%). Os tons continuam sendo conferidos com rigor.
 - 115 palavras curtas do dia a dia (木头, 石头, 铁, 钻石, 面包, 剑…), não os nomes oficiais longos (橡木原木).
 - A pronúncia certa toca com **voz humana** (projeto Shtooka / audio-cmn).
@@ -24,9 +25,8 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 - Revisão e quantidade nunca vêm coladas: entre uma e outra passam pelo menos 10 minutos de jogo.
 - **O desafio espera um momento calmo:** não começa enquanto você está levando dano, caindo, na água, dormindo, cavando ou usando um item, com o HUD escondido (F1), nem se você está parado há mais de 30 s (longe do teclado). No alto da tela aparece por que ele está esperando.
 - **Dicionário (tecla H):** todas as palavras com o item, 汉字, pinyin e português, o que você já aprendeu e dominou neste mundo; clique numa palavra para ouvir. A tecla **J** toca de novo a última palavra pedida. As teclas mudam em Opções → Controles → Mandarim Craft.
-- **Ajustes (`/hanyu ajustes`, ou pelo dicionário):** escolha o microfone vendo o volume ao vivo, calibre a voz e mude as opções sem comando.
+- **Ajustes (`/hanyu ajustes`, ou pelo dicionário):** escolha o microfone vendo o volume ao vivo e mude as opções sem comando.
 - **Passe o mouse num item** no inventário e a dica mostra o nome em chinês com o pinyin (木头 mùtou), menos o do desafio que está aberto. Para tirar: `/hanyu nomes nao`.
-- Na primeira fala o mod pede para você ler **três frases curtas**, cada uma com os quatro tons em ordem (`风调雨顺`, `千奇百怪`, `英雄好汉`), e aprende a altura da sua voz pela média delas; se uma destoar (microfone mexido, barulho), ela fica de fora. Leia em voz alta, do jeito que vai falar no jogo. Dá para refazer com `/hanyu calibrar`.
 - Errou (ou o mod não entendeu), você ganha mais uma chance na hora; se foi só o **tom**, ele toca a pronúncia antes (`/hanyu chances 0` para tirar). Se o problema for do mod (microfone, erro na análise), ninguém perde nada: ele avisa e pausa.
 - Cada tentativa fica registrada no `logs/latest.log` (o que o mod ouviu, os tons e o volume do microfone), para descobrir o que deu errado.
 
@@ -42,21 +42,22 @@ Mod de Minecraft (Java 1.21.1, Fabric) para aprender chinês jogando: **quando u
 | comando | o que faz |
 |---|---|
 | `/hanyu` | mostra os ajustes |
-| `/hanyu ajustes` | tela de ajustes: microfone (com o volume ao vivo), calibrar, opções |
+| `/hanyu ajustes` | tela de ajustes: microfone (com o volume ao vivo) e opções |
 | `/hanyu dicionario` | o dicionário (também na tecla H) |
 | `/hanyu teste` | treino: diga o nome de qualquer item, sem perder nada |
 | `/hanyu ouvir <palavra>` | toca a pronúncia (ex.: `/hanyu ouvir 钻石` ou `/hanyu ouvir diamante`) |
 | `/hanyu tons rigido\|normal\|leve` | quão exigente com os tons |
 | `/hanyu tempo <3-20>` | segundos para falar (padrão 7) |
 | `/hanyu dica auto\|nenhuma\|hanzi\|pinyin` | dica no desafio (padrão `auto`: pinyin até acertar; veja acima) |
-| `/hanyu calibrar` | refaz a medida da sua voz |
+| `/hanyu gravar sim\|nao` | guarda o áudio das tentativas na pasta `mandarimcraft-gravacoes` do jogo (padrão nao) |
 | `/hanyu chances <0-2>` | quantas tentativas extras quando erra (padrão 1) |
 | `/hanyu nomes sim\|nao` | nome em chinês na dica dos itens (padrão sim) |
 
 ## Problemas comuns
 - **O mod não me ouve:** abra `/hanyu ajustes`, escolha o microfone e fale: a barra de volume tem que mexer. Sem escolher, o mod usa o microfone **padrão do Windows** (Configurações → Sistema → Som → Entrada), não o que você escolheu no Discord. Confira também Privacidade → Microfone → "Permitir que aplicativos da área de trabalho acessem o microfone". Depois feche e abra o jogo.
 - **A barrinha verde quase não mexe:** aumente o volume de entrada do microfone nas mesmas configurações de som.
-- **Acerta as sílabas e erra o tom toda hora:** refaça `/hanyu calibrar` (falando alto, como no jogo) e, se precisar, use `/hanyu tons normal` ou `leve`. O log mostra a altura de cada frase da calibração (`[calibração]`).
+- **Acerta as sílabas e erra o tom toda hora:** olhe o desenho: a sua curva tem que acompanhar a linha cinza. Gritar atrapalha (num grito o 1º e o 2º tom acabam caindo no fim); fale firme, em volume normal. Se precisar, `/hanyu tons normal` ou `leve`.
+- **Acho que o mod está julgando errado:** ligue `/hanyu gravar sim` (ou "Guardar gravações" nos ajustes). Cada tentativa vira um `.wav` em `mandarimcraft-gravacoes`, com o nome dizendo a palavra e o resultado, e o `logs/latest.log` ganha as medidas de cada sílaba. Com esses arquivos dá para ajustar o mod à sua voz.
 - **Outro problema:** o `logs/latest.log` tem uma linha `[tentativa]` para cada fala, com o que o mod ouviu.
 
 ## Montar

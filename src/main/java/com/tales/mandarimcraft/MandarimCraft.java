@@ -387,7 +387,7 @@ public class MandarimCraft implements ModInitializer {
                 "Mandarim Craft: /mandarim comecar · pausar · continuar · palavras (o que já aprendeu) · faltam (o que falta) · esquecer <palavra|tudo>\n" +
                 "A cada 20 min: \"quantos você tem?\" (número + classificador: 六十四根木头); errou, perde 1/4 da pilha.\n" +
                 "Palavra aprendida volta em revisão (10 min, 30 min, 2 h, 6 h de jogo), com menos dica; errou, perde 1/4 da pilha.\n" +
-                "No seu jogo: tecla H = dicionário · /hanyu ajustes (microfone e opções) · calibrar · teste · ouvir <palavra>"), false);
+                "No seu jogo: tecla H = dicionário · /hanyu ajustes (microfone e opções) · teste · ouvir <palavra>"), false);
         return 1;
     }
 
@@ -408,7 +408,7 @@ public class MandarimCraft implements ModInitializer {
         }
         sendProgress(p, pd);
         c.getSource().sendFeedback(() -> Text.literal(on
-                ? "Mandarim Craft ativado. Itens novos no inventário viram desafio. Dica: faça /hanyu calibrar antes (lê três frases curtas para o mod conhecer a sua voz)."
+                ? "Mandarim Craft ativado. Itens novos no inventário viram desafio. Dica: /hanyu ajustes mostra se o microfone está ouvindo você."
                 : "Mandarim Craft pausado. /mandarim continuar para voltar.").formatted(on ? Formatting.GREEN : Formatting.GRAY), false);
         return 1;
     }

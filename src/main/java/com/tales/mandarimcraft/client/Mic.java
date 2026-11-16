@@ -49,7 +49,7 @@ public final class Mic {
     public volatile boolean mute;
     /** maior amostra da última gravação (0..32767), para o log */
     public volatile int peak;
-    /** quanto silêncio depois de falar conta como "terminou" (na calibração é maior: quem está aprendendo lê sílaba por sílaba) */
+    /** quanto silêncio depois de falar conta como "terminou" */
     public volatile int endSilenceMs = 700;
     /** o microfone que abriu na última gravação ("" = o padrão do sistema), para o log */
     public volatile String opened = "";

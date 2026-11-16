@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-/** Ajustes do jogador (config/mandarimcraft.json): tempo, rigor dos tons, dica e a referência da voz. */
+/** Ajustes do jogador (config/mandarimcraft.json): tempo, rigor dos tons, dica, microfone. */
 public final class ClientConfig {
     public int seconds = 7;            // tempo para falar
     public String tones = "rigido";    // rigido | normal | leve
@@ -20,11 +20,10 @@ public final class ClientConfig {
     public String hint = "auto";       // auto (pinyin até acertar; no "quantos você tem?" some conforme acerta) | nenhuma | hanzi | pinyin
     public boolean names = true;       // 汉字 + pinyin na dica dos itens (passar o mouse no inventário)
     public String mic = "";            // microfone escolhido nos ajustes (nome como o Java mostra); "" = o padrão do sistema
-    public double refHz = 0;           // altura média da voz (calibrar: três frases); 0 = ainda não calibrou
-    public int samples = 0;            // quantas falas já entraram na média
+    public boolean saveAudio = false;  // guarda o áudio de cada tentativa em mandarimcraft-gravacoes (para ouvir de novo e ajustar o mod)
     public int version = 0;            // formato do arquivo (ver sane())
 
-    private static final int VERSION = 3;
+    private static final int VERSION = 4;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static ClientConfig INSTANCE;
@@ -55,14 +54,11 @@ public final class ClientConfig {
     private void sane() {
         // até a versão 1 "nenhuma" era o padrão de todo mundo, não uma escolha: passa para a dica automática
         if (version < 2 && "nenhuma".equals(hint)) hint = "auto";
-        // até a versão 2 a calibração era uma frase só e saía baixa (cheia de 3º tom): calibra de novo com as três frases
-        if (version < 3) { refHz = 0; samples = 0; }
         version = VERSION;
         if (seconds < 3 || seconds > 20) seconds = 7;
         if (retries < 0 || retries > 2) retries = 1;
         if (tones == null || !List.of("rigido", "normal", "leve").contains(tones)) tones = "rigido";
         if (hint == null || !List.of("auto", "nenhuma", "hanzi", "pinyin").contains(hint)) hint = "auto";
-        if (!(refHz >= 60 && refHz <= 450)) { refHz = 0; samples = 0; }
         if (mic == null) mic = "";
     }
 
@@ -73,20 +69,5 @@ public final class ClientConfig {
 
     public double tol() {
         return switch (tones) { case "leve" -> 1.3; case "normal" -> 1.15; default -> 1.0; };
-    }
-
-    /**
-     * junta a altura desta fala na média da voz (em escala log). Peso pequeno: a calibração são três frases com os quatro
-     * tons, e uma palavra solta puxa pelo tom dela (3º tom baixo, 1º alto); antes a 1ª palavra depois de calibrar já valia metade.
-     */
-    public void addVoice(double hz) {
-        if (hz < 60 || hz > 450) return;
-        if (refHz <= 0 || samples == 0) { refHz = hz; samples = 1; }
-        else {
-            double w = 0.08;
-            refHz = Math.exp((1 - w) * Math.log(refHz) + w * Math.log(hz));
-            samples++;
-        }
-        save();
     }
 }

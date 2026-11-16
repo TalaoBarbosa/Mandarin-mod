@@ -79,15 +79,25 @@ public class MandarimClient implements ClientModInitializer {
                             String ver = FabricLoader.getInstance().getModContainer(MandarimCraft.MOD_ID).map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("?");
                             c.getSource().sendFeedback(Text.literal("汉语 (Mandarim Craft " + ver + "): tons " + k.tones + " · tempo " + k.seconds + " s · dica " + k.hint + " · chances extras: " + k.retries + " · nomes nos itens: " + (k.names ? "sim" : "nao") +
                                     " · microfone: " + (k.mic.isEmpty() ? "padrão do sistema" : k.mic) +
-                                    " · voz " + (k.refHz > 0 ? Math.round(k.refHz) + " Hz" : "não calibrada") + " · reconhecimento: " + Speech.status() +
-                                    "\n/hanyu ajustes (microfone e opções) · dicionario (tecla " + keyDict.getBoundKeyLocalizedText().getString() + ") · calibrar · teste · ouvir <palavra>" +
-                                    "\n/hanyu tons rigido|normal|leve · tempo <s> · dica auto|nenhuma|hanzi|pinyin · nomes sim|nao · chances <0-2>").formatted(Formatting.GRAY));
+                                    " · guardar gravações: " + (k.saveAudio ? "sim" : "nao") + " · reconhecimento: " + Speech.status() +
+                                    "\n/hanyu ajustes (microfone e opções) · dicionario (tecla " + keyDict.getBoundKeyLocalizedText().getString() + ") · teste · ouvir <palavra>" +
+                                    "\n/hanyu tons rigido|normal|leve · tempo <s> · dica auto|nenhuma|hanzi|pinyin · nomes sim|nao · chances <0-2> · gravar sim|nao").formatted(Formatting.GRAY));
                             return 1;
                         })
                         // a tela do chat fecha depois do comando: abrir a nossa tem que ficar para o passo seguinte
                         .then(literal("ajustes").executes(c -> { MinecraftClient mc = c.getSource().getClient(); mc.send(() -> mc.setScreen(new AjustesScreen(null))); return 1; }))
                         .then(literal("dicionario").executes(c -> { MinecraftClient mc = c.getSource().getClient(); mc.send(() -> mc.setScreen(new DicionarioScreen(null))); return 1; }))
-                        .then(literal("calibrar").executes(c -> busy(c, Desafio.startCalibration())))
+                        .then(literal("gravar").then(argument("sim_ou_nao", StringArgumentType.word())
+                                .suggests((c, b) -> { b.suggest("sim"); b.suggest("nao"); return b.buildFuture(); })
+                                .executes(c -> {
+                                    String v = StringArgumentType.getString(c, "sim_ou_nao");
+                                    if (!v.equals("sim") && !v.equals("nao")) { c.getSource().sendError(Text.literal("Use sim ou nao.")); return 0; }
+                                    ClientConfig.get().saveAudio = v.equals("sim"); ClientConfig.get().save();
+                                    c.getSource().sendFeedback(Text.literal(v.equals("sim")
+                                            ? "Vou guardar o áudio das tentativas (as " + Gravacoes.KEEP + " últimas) em " + Gravacoes.dir()
+                                            : "Não guardo mais o áudio das tentativas."));
+                                    return 1;
+                                })))
                         .then(literal("teste").executes(c -> busy(c, Desafio.startPractice())))
                         .then(literal("ouvir").then(argument("palavra", StringArgumentType.greedyString()).executes(c -> {
                             String a = plain(StringArgumentType.getString(c, "palavra"));
