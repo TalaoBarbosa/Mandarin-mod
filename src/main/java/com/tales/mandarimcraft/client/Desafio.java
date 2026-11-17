@@ -428,9 +428,25 @@ public final class Desafio {
     /** o que dizer quando a pessoa falou a palavra mas não deu para medir o tom */
     private static final String UNMEASURED = "Não deu para medir o tom: fale firme, sem sussurrar.";
 
+    /** como fazer cada tom, para quando ele sai errado (o erro mais comum de quem fala português é subir a sílaba inteira em vez de subir dentro dela) */
+    private static final String[] HOW = {"",
+            "1º tom: alto e reto, como segurar uma nota cantando.",
+            "2º tom: a voz sobe DENTRO da sílaba, do meio para o alto, como quem pergunta \"é?\". Só falar mais alto não é 2º tom.",
+            "3º tom: desce bem fundo; no fim da palavra volta a subir um pouco.",
+            "4º tom: cai de cima, curto e firme, como um \"Não!\" bravo."};
+
+    /** a linha dos tons: o que saiu errado e, embaixo, como fazer o tom da primeira sílaba errada */
+    private static String tonesLine(Result r) {
+        if (r.tones() == null) return "";
+        String what = r.tones().problems();
+        for (ToneCheck.SylResult s : r.tones().syls())
+            if (s.grade() == ToneCheck.Grade.BAD && s.expected() >= 1 && s.expected() <= 4) return what + "\n" + HOW[s.expected()];
+        return what;
+    }
+
     private static void onResult(Result r) {
         long now = System.currentTimeMillis();
-        String tons = r.tones() != null ? r.tones().problems() : "";   // só o que não saiu limpo: o desenho mostra o resto
+        String tons = tonesLine(r);   // só o que não saiu limpo (o desenho mostra o resto) e como fazer o tom errado
         if (r.error()) { onError(now); return; }
         // o reconhecedor não ouviu nada e ainda tem tempo: foi barulho antes da fala; continua ouvindo, sem gastar a tentativa
         if (cur != null && word != null && r.heard().isEmpty() && deadline - now > 1500) { resume(); return; }

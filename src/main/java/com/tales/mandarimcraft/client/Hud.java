@@ -124,7 +124,8 @@ public final class Hud {
 
         // a linha que explica os tons pode ser comprida (três sílabas com problema): quebra em vez de sair da tela
         int sw = ctx.getScaledWindowWidth();
-        List<OrderedText> l2s = l2.isEmpty() ? List.of() : tr.wrapLines(StringVisitable.plain(l2), Math.max(MIN_TEXT, Math.min(300, sw - 70)));
+        List<OrderedText> l2s = new java.util.ArrayList<>();
+        if (!l2.isEmpty()) for (String part : l2.split("\n")) l2s.addAll(tr.wrapLines(StringVisitable.plain(part), Math.max(MIN_TEXT, Math.min(300, sw - 70))));
         int l2W = 0;
         for (OrderedText t : l2s) l2W = Math.max(l2W, tr.getWidth(t));
 

@@ -53,20 +53,33 @@ public final class Pitch {
         return t;
     }
 
-    /** Tira o que não é voz (pouca energia ou sem periodicidade), corrige oitava e apaga trechos curtos demais. */
+    /**
+     * Tira o que não é voz (pouca energia ou sem periodicidade), conserta os erros de oitava do YIN e apaga trechos
+     * curtos demais.
+     *
+     * Erro de oitava é o YIN pular exatamente uma oitava (12 semitons) de um quadro para o seguinte: a voz de verdade
+     * não muda mais que ~1 semitom em 10 ms, então isso só pode ser erro de medida. Antes cada quadro era comparado com a
+     * mediana da fala inteira, e o que ficasse a mais de ~8 semitons abaixo (ou ~10 acima) dela era dobrado (ou cortado
+     * pela metade). Quem varia muito a voz (um 2º tom bem subido, um 3º tom bem baixo, uma sílaba gritada e a outra não)
+     * tinha a subida cortada pela metade: no desenho a voz aparecia caindo, e o mod dizia "não subiu".
+     */
     public static double[] clean(Track t) {
         final int n = t.size();
         final double[] f = t.f0.clone();
         double mx = 0;
         for (double r : t.rms) mx = Math.max(mx, r);
         for (int i = 0; i < n; i++) if (t.rms[i] < 0.06 * mx || t.ap[i] > 0.3) f[i] = 0;
+        fixOctaveJumps(f);
+        // longe demais da mediana para ser voz de uma mesma palavra (mais de 14 semitons): é oitava errada de um trecho
+        // inteiro; volta uma oitava se isso põe no lugar, senão não é voz
         final double m = median(f);
         if (m <= 0) return f;
         for (int i = 0; i < n; i++) {
             if (f[i] <= 0) continue;
-            double r = f[i] / m;
-            if (r < 0.62) f[i] = f[i] * 2 / m < 1.6 ? f[i] * 2 : 0;
-            else if (r > 1.75) f[i] = f[i] / 2 / m > 0.62 ? f[i] / 2 : 0;
+            double d = st(f[i]) - st(m);
+            if (Math.abs(d) <= 14) continue;
+            double back = d - Math.signum(d) * 12;
+            f[i] = Math.abs(back) <= 9 ? f[i] * Math.pow(2, -Math.signum(d)) : 0;
         }
         for (int i = 1; i < n - 1; i++) {
             if (f[i] > 0 && f[i - 1] > 0 && f[i + 1] > 0) {
@@ -87,6 +100,65 @@ public final class Pitch {
     }
 
     static double st(double hz) { return 12 * Math.log(hz / 100.0) / Math.log(2); }
+
+    /** salto maior que isto entre dois quadros com voz seguidos (ou com até MAX_GAP quadros sem voz no meio) é erro de medida */
+    static final double JUMP = 5.0;
+    static final int MAX_GAP = 3;
+
+    /**
+     * Conserta pulos de oitava dentro de cada trecho contínuo de voz: parte o trecho onde há salto > JUMP semitons; o
+     * pedaço mais comprido é o certo; andando para os lados a partir dele, um pedaço que chega com salto de 12 ± 3
+     * semitons em relação ao vizinho (já consertado) volta uma oitava. Entre sílabas (silêncio maior que MAX_GAP) não
+     * compara: ali a voz pode mesmo mudar bastante.
+     */
+    static void fixOctaveJumps(double[] f) {
+        int n = f.length, i = 0;
+        while (i < n) {
+            if (f[i] <= 0) { i++; continue; }
+            int last = i, j = i;
+            while (j < n && (f[j] > 0 || j - last <= MAX_GAP)) { if (f[j] > 0) last = j; j++; }
+            fixStretch(f, i, last + 1);
+            i = last + 1;
+        }
+    }
+
+    private static void fixStretch(double[] f, int s, int e) {
+        java.util.List<int[]> pieces = new java.util.ArrayList<>();
+        int start = -1, prev = -1;
+        for (int k = s; k < e; k++) {
+            if (f[k] <= 0) continue;
+            if (prev >= 0 && Math.abs(st(f[k]) - st(f[prev])) > JUMP) { pieces.add(new int[]{start, prev + 1}); start = k; }
+            if (start < 0) start = k;
+            prev = k;
+        }
+        if (start >= 0) pieces.add(new int[]{start, prev + 1});
+        if (pieces.size() < 2) return;
+        int anchor = 0;
+        for (int p = 1; p < pieces.size(); p++) if (voiced(f, pieces.get(p)) > voiced(f, pieces.get(anchor))) anchor = p;
+        for (int p = anchor + 1; p < pieces.size(); p++) shiftIfOctave(f, pieces.get(p), edge(f, pieces.get(p - 1), false), edge(f, pieces.get(p), true));
+        for (int p = anchor - 1; p >= 0; p--) shiftIfOctave(f, pieces.get(p), edge(f, pieces.get(p + 1), true), edge(f, pieces.get(p), false));
+    }
+
+    private static int voiced(double[] f, int[] p) { int c = 0; for (int k = p[0]; k < p[1]; k++) if (f[k] > 0) c++; return c; }
+
+    /** a altura (semitons) na ponta do pedaço: mediana dos 3 primeiros (first) ou dos 3 últimos quadros com voz */
+    private static double edge(double[] f, int[] p, boolean first) {
+        double[] v = new double[3];
+        int c = 0;
+        if (first) { for (int k = p[0]; k < p[1] && c < 3; k++) if (f[k] > 0) v[c++] = st(f[k]); }
+        else { for (int k = p[1] - 1; k >= p[0] && c < 3; k--) if (f[k] > 0) v[c++] = st(f[k]); }
+        double[] a = Arrays.copyOf(v, c);
+        Arrays.sort(a);
+        return a[a.length / 2];
+    }
+
+    /** o pedaço chega no vizinho com um salto de uma oitava (12 ± 3 semitons): volta uma oitava */
+    private static void shiftIfOctave(double[] f, int[] p, double neighbor, double mine) {
+        double d = mine - neighbor;
+        double k = Math.abs(d - 12) < 3 ? 0.5 : Math.abs(d + 12) < 3 ? 2 : 1;
+        if (k == 1) return;
+        for (int i = p[0]; i < p[1]; i++) if (f[i] > 0) f[i] *= k;
+    }
 
     /** mediana dos valores > 0 (0 se não houver) */
     public static double median(double[] v) {

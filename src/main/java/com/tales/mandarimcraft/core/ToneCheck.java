@@ -358,7 +358,14 @@ public final class ToneCheck {
         if (n > 0 && med > 0) {
             int fa = fromSec >= 0 ? (int) Math.floor(fromSec * 100) : 0, fb = toSec > 0 ? (int) Math.ceil(toSec * 100) : f.length;
             fa = Math.max(0, Math.min(f.length, fa - 5)); fb = Math.max(fa, Math.min(f.length, fb + 5));
-            for (int i = fa; i < fb; i++) if (f[i] > 0) { if (a < 0) a = i; b = i + 1; voiced++; }
+            for (int i = fa; i < fb; i++) if (f[i] > 0) { if (a < 0) a = i; b = i + 1; }
+            // o reconhecedor costuma marcar o fim da palavra cedo, e é no fim que o 2º tom sobe: a palavra vai até onde
+            // a voz continua sem parar (até 0,3 s além), e o começo também
+            if (a >= 0) {
+                while (b < f.length && b < fb + 30 && f[b] > 0) b++;
+                while (a > 0 && a > fa - 30 && f[a - 1] > 0) a--;
+                for (int i = a; i < b; i++) if (f[i] > 0) voiced++;
+            }
         }
         if (a < 0) {   // nenhuma voz no trecho: nada foi conferido (quem chama decide o que fazer com isso)
             for (int i = 0; i < n; i++) res.add(new SylResult(syls.get(i), exp[i], Grade.NONE, "", new double[0], 0, 0, 0, 0));
@@ -371,6 +378,8 @@ public final class ToneCheck {
                 cuts[k][0] = Math.max(0, Math.min(f.length - 1, (int) Math.floor(sylSecs[k][0] * 100)));
                 cuts[k][1] = Math.max(cuts[k][0] + 1, Math.min(f.length, (int) Math.ceil(sylSecs[k][1] * 100)));
             }
+            cuts[0][0] = Math.min(cuts[0][0], a);
+            cuts[n - 1][1] = Math.max(cuts[n - 1][1], b);
         } else cuts = smartCuts(f, rms, n, a, b);
 
         // 1) a curva de cada sílaba (em semitons sobre a mediana da fala) e como cada molde encaixa nela
